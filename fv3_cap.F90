@@ -53,13 +53,12 @@ module fv3gfs_cap_mod
 
   use module_wrt_grid_comp,   only: wrtSS => SetServices
 !
-  use module_cplfields,       only: nExportFields,    exportFields,          &
-                                    exportFieldsList, exportFieldTypes,      &
-                                    exportFieldShare,                        &
-                                    nImportFields,    importFields,          &
-                                    importFieldsList, importFieldTypes,      &
-                                    importFieldShare, importFieldsValid,     &
-                                    queryFieldList
+  use module_cplfields,       only: nExportFields,    nImportFields,          &
+                                    CplExportFields,  CplImportFields        
+
+  use module_cplfields,       only: exportFields,          &
+                                    importFields,          &
+                                    queryFieldList, cplfld_setup
   use module_cap_cpl,         only: realizeConnectedCplFields,               &
                                     clock_cplIntval, Dump_cplFields
 
@@ -246,6 +245,8 @@ module fv3gfs_cap_mod
     character(20)                          :: cwrtcomp
     character(160)                         :: msg
     integer                                :: isrctermprocessing
+
+    character(240)              :: msgString
 
     character(len=*),parameter  :: subname='(fv3_cap:InitializeAdvertise)'
     integer nfmout, nfsout , nfmout_hf, nfsout_hf
@@ -500,9 +501,10 @@ module fv3gfs_cap_mod
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, file=__FILE__)) call ESMF_Finalize(endflag=ESMF_END_ABORT)
 
-    ! Read in the FV3 coupling interval
+    ! Read in the FV3 coupling interval and the coupling fields type
     if ( cpl ) then
       call clock_cplIntval(gcomp, CF)
+      call cplfld_setup
     endif
 !
     first_kdt = 1
@@ -817,31 +819,35 @@ module fv3gfs_cap_mod
       if (isPetLocal) then
     
         ! importable fields:
-        do i = 1, size(ImportFieldsList)
-          if (importFieldShare(i)) then
+        do i = 1, NimportFields
+          if (CplImportFields(i)%fieldshare) then
             call NUOPC_Advertise(importState,         &
-                                 StandardName=trim(ImportFieldsList(i)), &
+                                 StandardName=trim(CplImportFields(i)%fieldname), &
                                  SharePolicyField="share", rc=rc)
             if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
           else
             call NUOPC_Advertise(importState,         &
-                                 StandardName=trim(ImportFieldsList(i)), rc=rc)
+                                 StandardName=trim(CplImportFields(i)%fieldname), rc=rc)
             if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
           end if
+          write(msgString,'(A)') trim(subname)//'  '//trim(CplImportFields(i)%fieldname)
+          call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
         end do
       
         ! exportable fields:
-        do i = 1, size(exportFieldsList)
-          if (exportFieldShare(i)) then
+        do i = 1, NexportFields
+          if (CplExportFields(i)%fieldshare) then
             call NUOPC_Advertise(exportState,                            &
-                                 StandardName=trim(exportFieldsList(i)), &
+                                 StandardName=trim(CplExportFields(i)%fieldname), &
                                  SharePolicyField="share", rc=rc)
             if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
           else
             call NUOPC_Advertise(exportState,         &
-                                 StandardName=trim(exportFieldsList(i)), rc=rc)
+                                 StandardName=trim(CplExportFields(i)%fieldname), rc=rc)
             if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
           end if
+          write(msgString,'(A)') trim(subname)//'  '//trim(CplExportFields(i)%fieldname)
+          call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
         end do
       
       endif
@@ -880,14 +886,16 @@ module fv3gfs_cap_mod
         call realizeConnectedCplFields(exportState, fcstGrid,                                                &
                                        numLevels, numSoilLayers, numTracers, num_diag_sfc_emis_flux,         &
                                        num_diag_down_flux, num_diag_type_down_flux, num_diag_burn_emis_flux, &
-                                       num_diag_cmass, exportFieldsList, exportFieldTypes, exportFields, rc)
+                                       num_diag_cmass, CplExportFields%fieldname, CplExportFields%fieldtype, &
+                                       exportFields, NexportFields, rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__,  file=__FILE__)) return
 
         ! -- realize connected fields in importState
         call realizeConnectedCplFields(importState, fcstGrid,                                                &
                                        numLevels, numSoilLayers, numTracers, num_diag_sfc_emis_flux,         &
                                        num_diag_down_flux, num_diag_type_down_flux, num_diag_burn_emis_flux, &
-                                       num_diag_cmass, importFieldsList, importFieldTypes, importFields, rc)
+                                       num_diag_cmass, CplImportFields%fieldname, CplImportFields%fieldtype, &
+                                       importFields, NimportFields, rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__,  file=__FILE__)) return
       end if
     endif
@@ -1473,10 +1481,10 @@ module fv3gfs_cap_mod
 
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
 
-    ! set the importFieldsValid flag
+    ! set the CplImportFields%fieldvalid flag
     ! associated(fieldList) will be false if there are no fields
 
-    importFieldsValid(:) = .true.
+    CplImportFields%fieldvalid=.true.
     if (associated(fieldList)) then
 !     if(fcstmype==0) print *,'in fv3_checkimport, inside associated(fieldList)'
       do n = 1,size(fieldList)
@@ -1484,13 +1492,13 @@ module fv3gfs_cap_mod
 
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
 
-        nf = queryFieldList(ImportFieldsList,fldname)
+        nf = queryFieldList(CplImportFields%fieldname,fldname)
         timeCheck1 = NUOPC_IsAtTime(fieldList(n), invalidTime, rc=rc)
 
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
 
         if (timeCheck1) then
-          importFieldsValid(nf) = .false.
+          CplImportFields(nf)%fieldvalid = .false.
 !         if(fcstmype==0) print *,'in fv3_checkimport,',trim(fldname),' is set unvalid, nf=',nf,' at time',date(1:6)
         else
           timeCheck2 = NUOPC_IsAtTime(fieldList(n), currTime, rc=rc)
@@ -1506,7 +1514,7 @@ module fv3gfs_cap_mod
           endif
         endif
         write(MESSAGE_CHECK,'(A,2i4,l3)') &
-          "FV3_CHECKIMPORT "//trim(fldname),n,nf,importFieldsValid(nf)
+          "FV3_CHECKIMPORT "//trim(fldname),n,nf,CplImportFields(nf)%fieldvalid
         CALL ESMF_LogWrite(MESSAGE_CHECK,ESMF_LOGMSG_INFO,rc=RC)
       enddo
     endif

@@ -1582,8 +1582,9 @@ end subroutine atmos_data_type_chksum
 
   subroutine assign_importdata(rc)
 
-    use module_cplfields,  only: importFields, nImportFields, QueryFieldList, &
-                                 ImportFieldsList, importFieldsValid
+    use module_cplfields,  only: importFields, nImportFields, QueryFieldList
+    use module_cplfields,  only: CplImportFields
+
     use ESMF
 !
     implicit none
@@ -1649,8 +1650,8 @@ end subroutine atmos_data_type_chksum
         ! get sea land mask: in order to update the coupling fields over the ocean/ice
 !        fldname = 'land_mask'
 !        if (trim(impfield_name) == trim(fldname)) then
-!          findex = QueryFieldList(ImportFieldsList,fldname)
-!          if (importFieldsValid(findex)) then
+!          findex = QueryFieldList(CplImportFields%fieldname,fldname)
+!          if (CplImportFields(findex)%fieldvalid) then
 !!$omp parallel do default(shared) private(i,j,nb,ix)
 !            do j=jsc,jec
 !              do i=isc,iec
@@ -1667,8 +1668,8 @@ end subroutine atmos_data_type_chksum
 !--------------------------------
           fldname = 'sea_ice_surface_temperature'
           if (trim(impfield_name) == trim(fldname)) then
-            findex  = QueryFieldList(ImportFieldsList,fldname)
-            if (importFieldsValid(findex)) then
+            findex  = QueryFieldList(CplImportFields%fieldname,fldname)
+            if (CplImportFields(findex)%fieldvalid) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
               do j=jsc,jec
                 do i=isc,iec
@@ -1684,11 +1685,11 @@ end subroutine atmos_data_type_chksum
 !--------------------------------------------------------------------------
           fldname = 'sea_surface_temperature'
           if (trim(impfield_name) == trim(fldname)) then
-            findex  = QueryFieldList(ImportFieldsList,fldname)
+            findex  = QueryFieldList(CplImportFields%fieldname,fldname)
 !       if (mpp_pe() == mpp_root_pe() .and. debug)  print *,' for sst', &
-!    ' fldname=',fldname,' findex=',findex,' importFieldsValid=',importFieldsValid(findex)
+!    ' fldname=',fldname,' findex=',findex,' importFieldsValid=',CplImportFields(findex)%fieldvalid
 
-            if (importFieldsValid(findex)) then
+            if (CplImportFields(findex)%fieldvalid) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
               do j=jsc,jec
                 do i=isc,iec
@@ -1709,8 +1710,8 @@ end subroutine atmos_data_type_chksum
 !-----------------------------------------------------------------------
           fldname = 'ice_fraction'
           if (trim(impfield_name) == trim(fldname)) then
-            findex  = QueryFieldList(ImportFieldsList,fldname)
-            if (importFieldsValid(findex)) then
+            findex  = QueryFieldList(CplImportFields%fieldname,fldname)
+            if (CplImportFields(findex)%fieldvalid) then
             lcpl_fice = .true.
 !$omp parallel do default(shared) private(i,j,nb,ix)
               do j=jsc,jec
@@ -1742,8 +1743,8 @@ end subroutine atmos_data_type_chksum
 !----------------------------------------------
           fldname = 'mean_up_lw_flx'
           if (trim(impfield_name) == trim(fldname)) then
-            findex  = QueryFieldList(ImportFieldsList,fldname)
-            if (importFieldsValid(findex)) then
+            findex  = QueryFieldList(CplImportFields%fieldname,fldname)
+            if (CplImportFields(findex)%fieldvalid) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
               do j=jsc,jec
 !               do i=isc,iec
@@ -1769,8 +1770,8 @@ end subroutine atmos_data_type_chksum
 !------------------------------------------------
           fldname = 'mean_laten_heat_flx'
           if (trim(impfield_name) == trim(fldname)) then
-            findex  = QueryFieldList(ImportFieldsList,fldname)
-            if (importFieldsValid(findex)) then
+            findex  = QueryFieldList(CplImportFields%fieldname,fldname)
+            if (CplImportFields(findex)%fieldvalid) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
               do j=jsc,jec
                 do i=isc,iec
@@ -1789,8 +1790,8 @@ end subroutine atmos_data_type_chksum
 !--------------------------------------------------
           fldname = 'mean_sensi_heat_flx'
           if (trim(impfield_name) == trim(fldname)) then
-            findex  = QueryFieldList(ImportFieldsList,fldname)
-            if (importFieldsValid(findex)) then
+            findex  = QueryFieldList(CplImportFields%fieldname,fldname)
+            if (CplImportFields(findex)%fieldvalid) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
               do j=jsc,jec
                 do i=isc,iec
@@ -1809,8 +1810,8 @@ end subroutine atmos_data_type_chksum
 !------------------------------------------------------------
           fldname = 'mean_zonal_moment_flx'
           if (trim(impfield_name) == trim(fldname)) then
-            findex  = QueryFieldList(ImportFieldsList,fldname)
-            if (importFieldsValid(findex)) then
+            findex  = QueryFieldList(CplImportFields%fieldname,fldname)
+            if (CplImportFields(findex)%fieldvalid) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
               do j=jsc,jec
                 do i=isc,iec
@@ -1829,8 +1830,8 @@ end subroutine atmos_data_type_chksum
 !-----------------------------------------------------------------
           fldname = 'mean_merid_moment_flx'
           if (trim(impfield_name) == trim(fldname)) then
-            findex  = QueryFieldList(ImportFieldsList,fldname)
-            if (importFieldsValid(findex)) then
+            findex  = QueryFieldList(CplImportFields%fieldname,fldname)
+            if (CplImportFields(findex)%fieldvalid) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
               do j=jsc,jec
                 do i=isc,iec
@@ -1849,8 +1850,8 @@ end subroutine atmos_data_type_chksum
 !----------------------------------------------
           fldname = 'mean_ice_volume'
           if (trim(impfield_name) == trim(fldname)) then
-            findex  = QueryFieldList(ImportFieldsList,fldname)
-            if (importFieldsValid(findex)) then
+            findex  = QueryFieldList(CplImportFields%fieldname,fldname)
+            if (CplImportFields(findex)%fieldvalid) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
               do j=jsc,jec
                 do i=isc,iec
@@ -1869,8 +1870,8 @@ end subroutine atmos_data_type_chksum
 !-------------------------------------------
           fldname = 'mean_snow_volume'
           if (trim(impfield_name) == trim(fldname)) then
-            findex  = QueryFieldList(ImportFieldsList,fldname)
-            if (importFieldsValid(findex)) then
+            findex  = QueryFieldList(CplImportFields%fieldname,fldname)
+            if (CplImportFields(findex)%fieldvalid) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
               do j=jsc,jec
                 do i=isc,iec
@@ -1931,7 +1932,7 @@ end subroutine atmos_data_type_chksum
 !
   subroutine setup_exportdata (rc)
 
-    use module_cplfields,  only: exportData, nExportFields, exportFieldsList, &
+    use module_cplfields,  only: exportData, nExportFields, CplExportFields, &
                                  queryFieldList, fillExportFields
 
     implicit none
@@ -1966,7 +1967,7 @@ end subroutine atmos_data_type_chksum
 
     if (IPD_Control%cplflx .or. IPD_Control%cplwav) then 
     ! Instantaneous u wind (m/s) 10 m above ground
-    idx = queryfieldlist(exportFieldsList,'inst_zonal_wind_height10m')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_zonal_wind_height10m')
     if (idx > 0 ) then
       if (mpp_pe() == mpp_root_pe() .and. debug) print *,'cpl, in get u10mi_cpl'
 !$omp parallel do default(shared) private(i,j,nb,ix)
@@ -1980,7 +1981,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instantaneous v wind (m/s) 10 m above ground
-    idx = queryfieldlist(exportFieldsList,'inst_merid_wind_height10m')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_merid_wind_height10m')
     if (idx > 0 ) then
       if (mpp_pe() == mpp_root_pe() .and. debug) print *,'cpl, in get v10mi_cpl'
 !$omp parallel do default(shared) private(i,j,nb,ix)
@@ -1998,7 +1999,7 @@ end subroutine atmos_data_type_chksum
 
     if (IPD_Control%cplflx) then
     ! MEAN Zonal compt of momentum flux (N/m**2)
-    idx = queryfieldlist(exportFieldsList,'mean_zonal_moment_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'mean_zonal_moment_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2011,7 +2012,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! MEAN Merid compt of momentum flux (N/m**2)
-    idx = queryfieldlist(exportFieldsList,'mean_merid_moment_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'mean_merid_moment_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2024,7 +2025,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! MEAN Sensible heat flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'mean_sensi_heat_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'mean_sensi_heat_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2037,7 +2038,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! MEAN Latent heat flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'mean_laten_heat_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'mean_laten_heat_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2050,7 +2051,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! MEAN Downward LW heat flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'mean_down_lw_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'mean_down_lw_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2063,7 +2064,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! MEAN Downward SW heat flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'mean_down_sw_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'mean_down_sw_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2076,7 +2077,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! MEAN precipitation rate (kg/m2/s)
-    idx = queryfieldlist(exportFieldsList,'mean_prec_rate')
+    idx = queryfieldlist(CplExportFields%fieldname,'mean_prec_rate')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2089,7 +2090,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instataneous Zonal compt of momentum flux (N/m**2)
-    idx = queryfieldlist(exportFieldsList,'inst_zonal_moment_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_zonal_moment_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2102,7 +2103,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instataneous Merid compt of momentum flux (N/m**2)
-    idx = queryfieldlist(exportFieldsList,'inst_merid_moment_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_merid_moment_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2115,7 +2116,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instataneous Sensible heat flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'inst_sensi_heat_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_sensi_heat_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2128,7 +2129,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instataneous Latent heat flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'inst_laten_heat_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_laten_heat_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2141,7 +2142,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instataneous Downward long wave radiation flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'inst_down_lw_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_down_lw_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2154,7 +2155,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instataneous Downward solar radiation flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'inst_down_sw_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_down_sw_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2167,7 +2168,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instataneous Temperature (K) 2 m above ground
-    idx = queryfieldlist(exportFieldsList,'inst_temp_height2m')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_temp_height2m')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2180,7 +2181,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instataneous Specific humidity (kg/kg) 2 m above ground
-    idx = queryfieldlist(exportFieldsList,'inst_spec_humid_height2m')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_spec_humid_height2m')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2193,7 +2194,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instataneous Temperature (K) at surface
-    idx = queryfieldlist(exportFieldsList,'inst_temp_height_surface')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_temp_height_surface')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2206,7 +2207,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instataneous Pressure (Pa) land and sea surface
-    idx = queryfieldlist(exportFieldsList,'inst_pres_height_surface')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_pres_height_surface')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2219,7 +2220,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instataneous Surface height (m)
-    idx = queryfieldlist(exportFieldsList,'inst_surface_height')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_surface_height')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2232,7 +2233,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! MEAN NET long wave radiation flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'mean_net_lw_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'mean_net_lw_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2245,7 +2246,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! MEAN NET solar radiation flux over the ocean (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'mean_net_sw_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'mean_net_sw_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2258,7 +2259,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instataneous NET long wave radiation flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'inst_net_lw_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_net_lw_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2271,7 +2272,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instataneous NET solar radiation flux over the ocean (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'inst_net_sw_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_net_sw_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2284,7 +2285,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! MEAN sfc downward nir direct flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'mean_down_sw_ir_dir_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'mean_down_sw_ir_dir_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2297,7 +2298,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! MEAN sfc downward nir diffused flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'mean_down_sw_ir_dif_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'mean_down_sw_ir_dif_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2310,7 +2311,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! MEAN sfc downward uv+vis direct flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'mean_down_sw_vis_dir_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'mean_down_sw_vis_dir_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2323,7 +2324,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! MEAN sfc downward uv+vis diffused flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'mean_down_sw_vis_dif_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'mean_down_sw_vis_dif_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2336,7 +2337,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instataneous sfc downward nir direct flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'inst_down_sw_ir_dir_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_down_sw_ir_dir_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2349,7 +2350,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instataneous sfc downward nir diffused flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'inst_down_sw_ir_dif_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_down_sw_ir_dif_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2362,7 +2363,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instataneous sfc downward uv+vis direct flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'inst_down_sw_vis_dir_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_down_sw_vis_dir_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2375,7 +2376,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instataneous sfc downward uv+vis diffused flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'inst_down_sw_vis_dif_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_down_sw_vis_dif_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2388,7 +2389,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! MEAN NET sfc nir direct flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'mean_net_sw_ir_dir_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'mean_net_sw_ir_dir_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2401,7 +2402,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! MEAN NET sfc nir diffused flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'mean_net_sw_ir_dif_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'mean_net_sw_ir_dif_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2414,7 +2415,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! MEAN NET sfc uv+vis direct flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'mean_net_sw_vis_dir_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'mean_net_sw_vis_dir_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2427,7 +2428,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! MEAN NET sfc uv+vis diffused flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'mean_net_sw_vis_dif_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'mean_net_sw_vis_dif_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2440,7 +2441,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instataneous net sfc nir direct flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'inst_net_sw_ir_dir_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_net_sw_ir_dir_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2453,7 +2454,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instataneous net sfc nir diffused flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'inst_net_sw_ir_dif_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_net_sw_ir_dif_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2466,7 +2467,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instataneous net sfc uv+vis direct flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'inst_net_sw_vis_dir_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_net_sw_vis_dir_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2479,7 +2480,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Instataneous net sfc uv+vis diffused flux (W/m**2)
-    idx = queryfieldlist(exportFieldsList,'inst_net_sw_vis_dif_flx')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_net_sw_vis_dif_flx')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2492,7 +2493,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! Land/Sea mask (sea:0,land:1)
-    idx = queryfieldlist(exportFieldsList,'inst_land_sea_mask')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_land_sea_mask')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2507,7 +2508,7 @@ end subroutine atmos_data_type_chksum
 ! Data from DYCORE:
 
     ! bottom layer temperature (t)
-    idx = queryfieldlist(exportFieldsList,'inst_temp_height_lowest')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_temp_height_lowest')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2525,7 +2526,7 @@ end subroutine atmos_data_type_chksum
 
     ! bottom layer specific humidity (q)
     !!! CHECK if tracer 1 is for specific humidity !!!
-    idx = queryfieldlist(exportFieldsList,'inst_spec_humid_height_lowest')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_spec_humid_height_lowest')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2542,7 +2543,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! bottom layer zonal wind (u)
-    idx = queryfieldlist(exportFieldsList,'inst_zonal_wind_height_lowest')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_zonal_wind_height_lowest')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2559,7 +2560,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! bottom layer meridionalw wind (v)
-    idx = queryfieldlist(exportFieldsList,'inst_merid_wind_height_lowest')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_merid_wind_height_lowest')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2576,7 +2577,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! bottom layer pressure (p)
-    idx = queryfieldlist(exportFieldsList,'inst_pres_height_lowest')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_pres_height_lowest')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2593,7 +2594,7 @@ end subroutine atmos_data_type_chksum
     endif
 
     ! bottom layer height (z)
-    idx = queryfieldlist(exportFieldsList,'inst_height_lowest')
+    idx = queryfieldlist(CplExportFields%fieldname,'inst_height_lowest')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec
@@ -2612,7 +2613,7 @@ end subroutine atmos_data_type_chksum
 ! END Data from DYCORE.
 
     ! MEAN snow precipitation rate (kg/m2/s)
-    idx = queryfieldlist(exportFieldsList,'mean_fprec_rate')
+    idx = queryfieldlist(CplExportFields%fieldname,'mean_fprec_rate')
     if (idx > 0 ) then
 !$omp parallel do default(shared) private(i,j,nb,ix)
       do j=jsc,jec

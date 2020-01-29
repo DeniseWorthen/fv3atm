@@ -12,178 +12,34 @@ module module_cplfields
 
   private
 
+  type :: CplFields
+   character(len=64)      :: fieldname
+   character(len=10)      :: fieldtype
+   logical                :: fieldshare
+   logical                :: fieldvalid
+  end type CplFields
+
+  integer, parameter :: maxExportFields =  80
+  integer, parameter :: maxImportFields =  20
+
+  type(CplFields), public :: CplExportFields(maxExportFields)
+  type(CplFields), public :: CplImportFields(maxImportFields)
+
+  integer, public :: NexportFields
+  integer, public :: NimportFields
+
 ! Export Fields ----------------------------------------
-  integer,          public, parameter :: NexportFields = 71
-  type(ESMF_Field), target, public    :: exportFields(NexportFields)
-  character(len=*), public, parameter :: exportFieldsList(NexportFields) = (/ &
-       "inst_pres_interface                      ", &
-       "inst_pres_levels                         ", &
-       "inst_geop_interface                      ", &
-       "inst_geop_levels                         ", &
-       "inst_temp_levels                         ", &
-       "inst_zonal_wind_levels                   ", &
-       "inst_merid_wind_levels                   ", &
-       "inst_omega_levels                        ", &
-       "inst_tracer_mass_frac                    ", &
-       "soil_type                                ", &
-       "inst_pbl_height                          ", &
-       "surface_cell_area                        ", &
-       "inst_convective_rainfall_amount          ", &
-       "inst_exchange_coefficient_heat_levels    ", &
-       "inst_spec_humid_conv_tendency_levels     ", &
-       "inst_friction_velocity                   ", &
-       "inst_rainfall_amount                     ", &
-       "inst_soil_moisture_content               ", &
-       "inst_up_sensi_heat_flx                   ", &
-       "inst_lwe_snow_thickness                  ", &
-       "vegetation_type                          ", &
-       "inst_vegetation_area_frac                ", &
-       "inst_surface_roughness                   ", &
-       "mean_zonal_moment_flx                    ", &
-       "mean_merid_moment_flx                    ", &
-       "mean_sensi_heat_flx                      ", &
-       "mean_laten_heat_flx                      ", &
-       "mean_down_lw_flx                         ", &
-       "mean_down_sw_flx                         ", &
-       "mean_prec_rate                           ", &
-       "inst_zonal_moment_flx                    ", &
-       "inst_merid_moment_flx                    ", &
-       "inst_sensi_heat_flx                      ", &
-       "inst_laten_heat_flx                      ", &
-       "inst_down_lw_flx                         ", &
-       "inst_down_sw_flx                         ", &
-       "inst_temp_height2m                       ", &
-       "inst_spec_humid_height2m                 ", &
-       "inst_zonal_wind_height10m                ", &
-       "inst_merid_wind_height10m                ", &
-       "inst_temp_height_surface                 ", &
-       "inst_pres_height_surface                 ", &
-       "inst_surface_height                      ", &
-       "mean_net_lw_flx                          ", &
-       "mean_net_sw_flx                          ", &
-       "inst_net_lw_flx                          ", &
-       "inst_net_sw_flx                          ", &
-       "mean_down_sw_ir_dir_flx                  ", &
-       "mean_down_sw_ir_dif_flx                  ", &
-       "mean_down_sw_vis_dir_flx                 ", &
-       "mean_down_sw_vis_dif_flx                 ", &
-       "inst_down_sw_ir_dir_flx                  ", &
-       "inst_down_sw_ir_dif_flx                  ", &
-       "inst_down_sw_vis_dir_flx                 ", &
-       "inst_down_sw_vis_dif_flx                 ", &
-       "mean_net_sw_ir_dir_flx                   ", &
-       "mean_net_sw_ir_dif_flx                   ", &
-       "mean_net_sw_vis_dir_flx                  ", &
-       "mean_net_sw_vis_dif_flx                  ", &
-       "inst_net_sw_ir_dir_flx                   ", &
-       "inst_net_sw_ir_dif_flx                   ", &
-       "inst_net_sw_vis_dir_flx                  ", &
-       "inst_net_sw_vis_dif_flx                  ", &
-       "inst_land_sea_mask                       ", &
-       "inst_temp_height_lowest                  ", &
-       "inst_spec_humid_height_lowest            ", &
-       "inst_zonal_wind_height_lowest            ", &
-       "inst_merid_wind_height_lowest            ", &
-       "inst_pres_height_lowest                  ", &
-       "inst_height_lowest                       ", &
-       "mean_fprec_rate                          " &
-!      "northward_wind_neutral                   ", &
-!      "eastward_wind_neutral                    ", &
-!      "upward_wind_neutral                      ", &
-!      "temp_neutral                             ", &
-!      "O_Density                                ", &
-!      "O2_Density                               ", &
-!      "N2_Density                               ", &
-!      "height                                   "  &
-  /)
-  ! Field types should be provided for proper handling
-  ! according to the table below:
-  !  g : soil levels (3D)
-  !  i : interface (3D)
-  !  l : model levels (3D)
-  !  s : surface (2D)
-  !  t : tracers (4D)
-  character(len=*), public, parameter :: exportFieldTypes(NexportFields) = (/ &
-       "i","l","i","l","l","l","l","l","t", &
-       "s","s","s","s","l","l","s","s","g", &
-       "s","s","s","s","s","s","s","s",     &
-       "s","s","s","s","s","s","s","s",     &
-       "s","s","s","s","s","s","s","s",     &
-       "s","s","s","s","s","s","s","s",     &
-       "s","s","s","s","s","s","s","s",     &
-       "s","s","s","s","s","s","s","s",     &
-       "s","s","s","s","s"                  &
-!      "l","l","l","l","l","l","l","s",     &
-  /)
-  ! Set exportFieldShare to .true. if field is provided as memory reference
-  ! to coupled components
-  logical, public, parameter :: exportFieldShare(NexportFields) = (/ &
-       .true. ,.true. ,.true. ,.true. ,.true. , &
-       .true. ,.true. ,.true. ,.true. ,.true. , &
-       .true. ,.true. ,.true. ,.true. ,.true. , &
-       .true. ,.true. ,.true. ,.true. ,.true. , &
-       .true. ,.true. ,.true. ,.false.,.false., &
-       .false.,.false.,.false.,.false.,.false., &
-       .false.,.false.,.false.,.false.,.false. , &
-       .true. ,.false.,.false.,.false.,.false. , &
-       .true. ,.false.,.false.,.false.,.false., &
-       .false.,.false.,.false.,.false.,.false., &
-       .false.,.false.,.false.,.false.,.false., &
-       .false.,.false.,.false.,.false.,.false., &
-       .false.,.false.,.false.,.true. ,.false., &
-       .false.,.false.,.false.,.false.,.false., &
-       .false.                                  &
-!      .false.,.false.,.false.,.false.,.false., &
-!      .false.,.false.,.false.                  &
-  /)
   real(kind=8), allocatable, public :: exportData(:,:,:)
+  type(ESMF_Field), target, public, allocatable :: exportFields(:)
 
 ! Import Fields ----------------------------------------
-  integer,          public, parameter :: NimportFields = 16
-  logical,          public            :: importFieldsValid(NimportFields)
-  type(ESMF_Field), target, public    :: importFields(NimportFields)
-  character(len=*), public, parameter :: importFieldsList(NimportFields) = (/ &
-       "inst_tracer_mass_frac                  ", &
-       "land_mask                              ", &
-       "sea_ice_surface_temperature            ", &
-       "sea_surface_temperature                ", &
-       "ice_fraction                           ", &
-!      "inst_ice_ir_dif_albedo                 ", &
-!      "inst_ice_ir_dir_albedo                 ", &
-!      "inst_ice_vis_dif_albedo                ", &
-!      "inst_ice_vis_dir_albedo                ", &
-       "mean_up_lw_flx                         ", &
-       "mean_laten_heat_flx                    ", &
-       "mean_sensi_heat_flx                    ", &
-!      "mean_evap_rate                         ", &
-       "mean_zonal_moment_flx                  ", &
-       "mean_merid_moment_flx                  ", &
-       "mean_ice_volume                        ", &
-       "mean_snow_volume                       ", &
-       "inst_tracer_up_surface_flx             ", &
-       "inst_tracer_down_surface_flx           ", &
-       "inst_tracer_clmn_mass_dens             ", &
-       "inst_tracer_anth_biom_flx              "  &
-  /)
-  character(len=*), public, parameter :: importFieldTypes(NimportFields) = (/ &
-       "t",                                 &
-       "s","s","s","s","s",                 &
-       "s","s","s","s","s",                 &
-       "s","u","d","c","b"                  &
-  /)
-  ! Set importFieldShare to .true. if field is provided as memory reference
-  ! from coupled components
-  logical, public, parameter :: importFieldShare(NimportFields) = (/ &
-       .true. ,                                 &
-       .false.,.false.,.false.,.false.,.false., &
-       .false.,.false.,.false.,.false.,.false., &
-       .false.,.true. ,.true. ,.true. ,.true.   &
-  /)
+  type(ESMF_Field), target, public, allocatable :: importFields(:)
 
   ! Methods
   public fillExportFields
   public queryFieldList
   public cplFieldGet
+  public cplfld_setup
 
 !-----------------------------------------------------------------------------
   contains
@@ -365,4 +221,161 @@ module module_cplfields
 !
 !------------------------------------------------------------------------------
 !
+  subroutine cplfld_setup
+
+   ! Field types should be provided for proper handling
+   ! according to the table below:
+   !  g : soil levels (3D)
+   !  i : interface (3D)
+   !  l : model levels (3D)
+   !  s : surface (2D)
+   !  t : tracers (4D)
+
+   ! Set CplExportFields%share to .true. if field is provided as memory reference
+   ! to coupled components
+   ! Set CplImportFields%share to .true. if field is provided as memory reference
+   ! from coupled components
+
+          integer :: ii, rc
+   character(240) :: msgString
+
+   NexportFields = 0
+   NimportFields = 0
+
+    ! set defaults
+    ii = 0; rc = 0
+    CplExportFields(:)%fieldname  = ' '
+    CplExportFields(:)%fieldtype  = 's'
+    CplExportFields(:)%fieldshare = .false.
+    CplExportFields(:)%fieldvalid = .false.  !not used for ExportFields
+    
+    ii = ii + 1; call filltype(CplExportFields(ii),                    'inst_pres_interface', 'i',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                       'inst_pres_levels', 'l',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                    'inst_geop_interface', 'i',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                       'inst_geop_levels', 'l',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                       'inst_temp_levels', 'l',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                 'inst_zonal_wind_levels', 'l',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                 'inst_merid_wind_levels', 'l',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                      'inst_omega_levels', 'l',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                  'inst_tracer_mass_frac', 't',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                              'soil_type', 's',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                        'inst_pbl_height', 's',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                      'surface_cell_area', 's',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),        'inst_convective_rainfall_amount', 's',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),  'inst_exchange_coefficient_heat_levels', 'l',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),   'inst_spec_humid_conv_tendency_levels', 'l',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                 'inst_friction_velocity', 's',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                   'inst_rainfall_amount', 's',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),             'inst_soil_moisture_content', 'g',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                 'inst_up_sensi_heat_flx', 's',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                'inst_lwe_snow_thickness', 's',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                        'vegetation_type', 's',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),              'inst_vegetation_area_frac', 's',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                 'inst_surface_roughness', 's',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                  'mean_zonal_moment_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                  'mean_merid_moment_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                    'mean_sensi_heat_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                    'mean_laten_heat_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                       'mean_down_lw_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                       'mean_down_sw_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                         'mean_prec_rate', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                  'inst_zonal_moment_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                  'inst_merid_moment_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                    'inst_sensi_heat_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                    'inst_laten_heat_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                       'inst_down_lw_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                       'inst_down_sw_flx', 's',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                     'inst_temp_height2m', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),               'inst_spec_humid_height2m', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),              'inst_zonal_wind_height10m', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),              'inst_merid_wind_height10m', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),               'inst_temp_height_surface', 's',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),               'inst_pres_height_surface', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                    'inst_surface_height', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                        'mean_net_lw_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                        'mean_net_sw_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                        'inst_net_lw_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                        'inst_net_sw_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                'mean_down_sw_ir_dir_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                'mean_down_sw_ir_dif_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),               'mean_down_sw_vis_dir_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),               'mean_down_sw_vis_dif_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                'inst_down_sw_ir_dir_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                'inst_down_sw_ir_dif_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),               'inst_down_sw_vis_dir_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),               'inst_down_sw_vis_dif_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                 'mean_net_sw_ir_dir_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                 'mean_net_sw_ir_dif_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                'mean_net_sw_vis_dir_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                'mean_net_sw_vis_dif_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                 'inst_net_sw_ir_dir_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                 'inst_net_sw_ir_dif_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                'inst_net_sw_vis_dir_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                'inst_net_sw_vis_dif_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                     'inst_land_sea_mask', 's',  .true.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                'inst_temp_height_lowest', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),          'inst_spec_humid_height_lowest', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),          'inst_zonal_wind_height_lowest', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),          'inst_merid_wind_height_lowest', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                'inst_pres_height_lowest', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                     'inst_height_lowest', 's', .false.)
+    ii = ii + 1; call filltype(CplExportFields(ii),                        'mean_fprec_rate', 's', .false.)
+ 
+    NexportFields = ii
+    if(NexportFields > maxExportFields)then
+     msgString = 'NexportFields > MaxExportFields'
+     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+     if (ESMF_LogFoundError(rcToCheck=-1, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
+    endif
+    allocate(exportFields(1:NexportFields))
+
+!-----------------------------------------------------------------------------
+
+    ! set defaults
+    ii = 0; rc = 0
+    CplImportFields(:)%fieldname  = ' '
+    CplImportFields(:)%fieldtype  = 's'
+    CplImportFields(:)%fieldshare = .false.
+    CplImportFields(:)%fieldvalid = .false.  !set dynamically
+
+    ii = ii + 1; call filltype(CplImportFields(ii),                  'inst_tracer_mass_frac', 't',  .true.)
+    ii = ii + 1; call filltype(CplImportFields(ii),                              'land_mask', 's', .false.)
+    ii = ii + 1; call filltype(CplImportFields(ii),            'sea_ice_surface_temperature', 's', .false.)
+    ii = ii + 1; call filltype(CplImportFields(ii),                'sea_surface_temperature', 's', .false.)
+    ii = ii + 1; call filltype(CplImportFields(ii),                           'ice_fraction', 's', .false.)
+    ii = ii + 1; call filltype(CplImportFields(ii),                         'mean_up_lw_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplImportFields(ii),                    'mean_laten_heat_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplImportFields(ii),                    'mean_sensi_heat_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplImportFields(ii),                  'mean_zonal_moment_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplImportFields(ii),                  'mean_merid_moment_flx', 's', .false.)
+    ii = ii + 1; call filltype(CplImportFields(ii),                        'mean_ice_volume', 's', .false.)
+    ii = ii + 1; call filltype(CplImportFields(ii),                       'mean_snow_volume', 's', .false.)
+    ii = ii + 1; call filltype(CplImportFields(ii),             'inst_tracer_up_surface_flx', 'u',  .true.)
+    ii = ii + 1; call filltype(CplImportFields(ii),           'inst_tracer_down_surface_flx', 'd',  .true.)
+    ii = ii + 1; call filltype(CplImportFields(ii),             'inst_tracer_clmn_mass_dens', 'c',  .true.)
+    ii = ii + 1; call filltype(CplImportFields(ii),              'inst_tracer_anth_biom_flx', 'b',  .true.)
+
+    NimportFields = ii
+    if(NimportFields > MaxImportFields)then
+     msgString = 'NimportFields > MaxImportFields'
+     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+     if (ESMF_LogFoundError(rcToCheck=-1, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
+    endif
+    allocate(importFields(1:NimportFields))
+
+  end subroutine cplfld_setup
+
+  subroutine filltype(fldtyp,vname,vtype,vshare)
+
+  character(len=*), intent(in) :: vname,vtype
+  logical, intent(in) :: vshare
+
+  type(CplFields), intent(out) :: fldtyp
+
+  fldtyp%fieldname  = trim(vname)
+  fldtyp%fieldtype  = trim(vtype)
+  fldtyp%fieldshare = vshare
+
+ end subroutine filltype
+
 end module module_cplfields

@@ -102,7 +102,8 @@ module module_cap_cpl
                                          numLevels, numSoilLayers, numTracers,             &
                                          num_diag_sfc_emis_flux, num_diag_down_flux,       &
                                          num_diag_type_down_flux, num_diag_burn_emis_flux, &
-                                         num_diag_cmass, fieldNames, fieldTypes, fieldList, rc)
+                                         num_diag_cmass, fieldNames, fieldTypes, fieldList,&
+                                         Nfields, rc)
 
       type(ESMF_State),            intent(inout)  :: state
       type(ESMF_Grid),                intent(in)  :: grid
@@ -116,6 +117,7 @@ module module_cap_cpl
       integer,                        intent(in)  :: num_diag_cmass
       character(len=*), dimension(:), intent(in)  :: fieldNames
       character(len=*), dimension(:), intent(in)  :: fieldTypes
+      integer,                        intent(in)  :: Nfields
       type(ESMF_Field), dimension(:), intent(out) :: fieldList
       integer,                        intent(out) :: rc
 
@@ -133,7 +135,7 @@ module module_cap_cpl
         return
       end if
 
-      do item = 1, size(fieldNames)
+      do item = 1, Nfields
         isConnected = NUOPC_IsConnected(state, fieldName=trim(fieldNames(item)), rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
         if (isConnected) then
