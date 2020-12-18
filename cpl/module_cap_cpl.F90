@@ -216,11 +216,12 @@ module module_cap_cpl
   !-----------------------------------------------------------------------------
 
     subroutine diagnose_cplFields(gcomp, importState, exportstate, clock_fv3,    &
-         statewrite_flag, stdiagnose_flag, state_tag, timestr)
+                     fcstpe, statewrite_flag, stdiagnose_flag, state_tag, timestr)
 
       type(ESMF_GridComp), intent(in)       :: gcomp
       type(ESMF_State)                      :: importState, exportstate
       type(ESMF_Clock),intent(in)           :: clock_fv3
+      logical, intent(in)                   :: fcstpe
       logical, intent(in)                   :: statewrite_flag
       integer, intent(in)                   :: stdiagnose_flag
       character(len=*),         intent(in)  :: state_tag                        !< Import or export.
@@ -248,7 +249,7 @@ module module_cap_cpl
         call ESMF_GridCompGet(gcomp, importState=importState, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
 
-        if(stdiagnose_flag > 0)then
+        if(stdiagnose_flag > 0 .and. fcstpe)then
          call state_diagnose(importState, ':IS', rc=rc)
         end if
 
@@ -264,7 +265,7 @@ module module_cap_cpl
         call ESMF_GridCompGet(gcomp, exportState=exportState, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
 
-        if(stdiagnose_flag > 0)then
+        if(stdiagnose_flag > 0 .and. fcstpe)then
          call state_diagnose(exportState, ':ES', rc=rc)
         end if
 
