@@ -158,7 +158,7 @@ module module_cplfields
     FieldInfo("t2m                                      ", "s") ]
 
 ! Import Fields ----------------------------------------
-  integer,          public, parameter :: NimportFields = 48
+  integer,          public, parameter :: NimportFields = 48+17
   logical,          public            :: importFieldsValid(NimportFields)
   type(ESMF_Field), target, public    :: importFields(NimportFields)
 
@@ -188,6 +188,25 @@ module module_cplfields
     FieldInfo("laten_heat_flx_atm_into_ocn              ", "s"), &
     FieldInfo("sensi_heat_flx_atm_into_ocn              ", "s"), &
     FieldInfo("lwup_flx_ocn                             ", "s"), &
+
+    ! For mediator NST
+    FieldInfo("Snst_tref                                ", "s"), &
+    FieldInfo("Snst_dconv                               ", "s"), &
+    FieldInfo("Snst_dtcool                              ", "s"), &
+    FieldInfo("Snst_qrain                               ", "s"), &
+    FieldInfo("Snst_xtts                                ", "s"), &
+    FieldInfo("Snst_xzts                                ", "s"), &
+    FieldInfo("Snst_c0                                  ", "s"), &
+    FieldInfo("Snst_cd                                  ", "s"), &
+    FieldInfo("Snst_w0                                  ", "s"), &
+    FieldInfo("Snst_wd                                  ", "s"), &
+    FieldInfo("Snst_xs                                  ", "s"), &
+    FieldInfo("Snst_xt                                  ", "s"), &
+    FieldInfo("Snst_xu                                  ", "s"), &
+    FieldInfo("Snst_xv                                  ", "s"), &
+    FieldInfo("Snst_xz                                  ", "s"), &
+    FieldInfo("Snst_zc                                  ", "s"), &
+    FieldInfo("Snst_t                                   ", "s"), &
 
     !  For JEDI
     ! dynamics
