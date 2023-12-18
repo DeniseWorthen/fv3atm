@@ -1950,7 +1950,8 @@ end subroutine update_atmos_chemistry
 
 ! get sst:  sst needs to be adjusted by land sea mask before passing to fv3
 !--------------------------------------------------------------------------
-          fldname = 'sea_surface_temperature'
+          !fldname = 'sea_surface_temperature'
+          fldname = 'near_surface_sea_temperature'
           if (trim(impfield_name) == trim(fldname)) then
             findex  = queryImportFields(fldname)
             if (importFieldsValid(findex) .and. GFS_control%cplocn2atm) then

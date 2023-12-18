@@ -206,7 +206,7 @@ module module_cplfields
     FieldInfo("Snst_xv                                  ", "s"), &
     FieldInfo("Snst_xz                                  ", "s"), &
     FieldInfo("Snst_zc                                  ", "s"), &
-    FieldInfo("Snst_t                                   ", "s"), &
+    FieldInfo("near_surface_sea_temperature             ", "s"), &
 
     !  For JEDI
     ! dynamics
