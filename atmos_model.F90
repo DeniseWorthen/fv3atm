@@ -3363,7 +3363,12 @@ end subroutine update_atmos_chemistry
               call block_data_copy(datar82d, GFS_data(nb)%coupling%nvisdfi_cpl, Atm_block, nb, rc=localrc)
             ! Land/Sea mask (sea:0,land:1)
             case ('inst_land_sea_mask', 'slmsk')
-              call block_data_copy(datar82d, GFS_data(nb)%sfcprop%slmsk, Atm_block, nb, rc=localrc)
+               call block_data_copy(datar82d, GFS_data(nb)%sfcprop%slmsk, Atm_block, nb, rc=localrc)
+            ! oceanfrac used by atm to calculate fluxes
+            case ('openwater_frac_in_atm')
+               call block_data_combine_fractions(datar82d, GFS_data(nb)%sfcprop%oceanfrac, GFS_Data(nb)%sfcprop%fice, Atm_block, nb, rc=localrc)
+            case ('landfrac_in_atm')
+               call block_data_copy(datar82d, GFS_data(nb)%sfcprop%landfrac, Atm_block, nb, rc=localrc)
             !--- Mean quantities
             ! MEAN Zonal compt of momentum flux (N/m**2)
             case ('mean_zonal_moment_flx_atm')
@@ -3416,9 +3421,6 @@ end subroutine update_atmos_chemistry
             ! MEAN NET sfc uv+vis diffused flux (W/m**2)
             case ('mean_net_sw_vis_dif_flx')
               call block_data_copy(datar82d, GFS_data(nb)%coupling%nvisdf_cpl, Atm_block, nb, rtime, spval, rc=localrc)
-            ! oceanfrac used by atm to calculate fluxes
-            case ('openwater_frac_in_atm')
-              call block_data_combine_fractions(datar82d, GFS_data(nb)%sfcprop%oceanfrac, GFS_Data(nb)%sfcprop%fice, Atm_block, nb, rc=localrc)
             !--- Dycore quantities
             ! bottom layer temperature (t)
             case('inst_temp_height_lowest')

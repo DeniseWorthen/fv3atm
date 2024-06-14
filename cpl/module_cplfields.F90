@@ -26,7 +26,7 @@ module module_cplfields
   !  l : model levels (3D)
   !  s : surface (2D)
   !  t : tracers (4D)
-  integer,          public, parameter :: NexportFields = 120
+  integer,          public, parameter :: NexportFields = 121
   type(ESMF_Field), target, public    :: exportFields(NexportFields)
 
   type(FieldInfo), dimension(NexportFields), public, parameter :: exportFieldsInfo = [ &
@@ -108,6 +108,7 @@ module module_cplfields
     FieldInfo("inst_height_lowest                       ", "s"), &
     FieldInfo("inst_fprec_rate                          ", "s"), &
     FieldInfo("openwater_frac_in_atm                    ", "s"), &
+    FieldInfo("landfrac_in_atm                          ", "s"), &
     FieldInfo("ice_fraction_in_atm                      ", "s"), &
     FieldInfo("lake_fraction                            ", "s"), &
     FieldInfo("ocean_fraction                           ", "s"), &
