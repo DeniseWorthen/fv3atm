@@ -3369,6 +3369,8 @@ end subroutine update_atmos_chemistry
                call block_data_combine_fractions(datar82d, GFS_data(nb)%sfcprop%oceanfrac, GFS_Data(nb)%sfcprop%fice, Atm_block, nb, rc=localrc)
             case ('landfrac_in_atm')
                call block_data_copy(datar82d, GFS_data(nb)%sfcprop%landfrac, Atm_block, nb, rc=localrc)
+            case ('surface_cell_area')
+               call block_data_copy(datar82d, GFS_Data(nb)%Grid%area, Atm_block, nb, rc=localrc)
             !--- Mean quantities
             ! MEAN Zonal compt of momentum flux (N/m**2)
             case ('mean_zonal_moment_flx_atm')
