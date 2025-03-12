@@ -3654,6 +3654,7 @@ end subroutine update_atmos_chemistry
   subroutine addLsmask2grid(fcstGrid, Atmos, rc)
 
     use ESMF
+    use physcons, only: con_rerth
 !
     implicit none
     type(ESMF_Grid)      :: fcstGrid
@@ -3716,7 +3717,7 @@ end subroutine update_atmos_chemistry
     do j=jsc,jec
       do i=isc,iec
          maskPtr(i-isc+1,j-jsc+1) = lsmask(i,j)
-         areaPtr(i-isc+1,j-jsc+1) = Atmos%area(i,j)
+         areaPtr(i-isc+1,j-jsc+1) = Atmos%area(i,j)/(con_rerth*con_rerth)
       enddo
     enddo
 !      print *,'in set set lsmask, maskPtr=', maxval(maskPtr), minval(maskPtr)
