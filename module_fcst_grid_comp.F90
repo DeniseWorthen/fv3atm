@@ -270,7 +270,7 @@ if (rc /= ESMF_SUCCESS) write(0,*) 'rc=',rc,__FILE__,__LINE__; if(ESMF_LogFoundE
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
 
     !TODO: Consider aligning mask treatment with coordinates... especially if it requires updates for moving
-    call addLsmask2grid(grid, rc=rc)
+    call addLsmask2grid(grid, Atmos, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
 
     ! - Add Attributes used by output

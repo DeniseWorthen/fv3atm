@@ -3344,7 +3344,7 @@ end subroutine update_atmos_chemistry
             !--- Instantaneous quantities
             ! Instantaneous mean layer pressure (Pa)
             case ('inst_pres_levels')
-              call block_data_copy_or_fill(datar83d, GFS_statein%prsl, zeror8, Atm_block, nb, offset=GFS_Control%chunk_begin(nb), rc=localrc)  
+              call block_data_copy_or_fill(datar83d, GFS_statein%prsl, zeror8, Atm_block, nb, offset=GFS_Control%chunk_begin(nb), rc=localrc)
             ! Instantaneous geopotential at model layer centers (m2 s-2)
             case ('inst_geop_levels')
               call block_data_copy_or_fill(datar83d, GFS_statein%phil, zeror8, Atm_block, nb, offset=GFS_Control%chunk_begin(nb), rc=localrc)
@@ -3356,7 +3356,7 @@ end subroutine update_atmos_chemistry
               call block_data_copy_or_fill(datar83d, GFS_statein%vgrs, zeror8, Atm_block, nb, offset=GFS_Control%chunk_begin(nb), rc=localrc)
             ! Instantaneous surface roughness length (cm)
             case ('inst_surface_roughness')
-              call block_data_copy(datar82d, GFS_sfcprop%zorl, Atm_block, nb, offset=GFS_Control%chunk_begin(nb), rc=localrc)            
+              call block_data_copy(datar82d, GFS_sfcprop%zorl, Atm_block, nb, offset=GFS_Control%chunk_begin(nb), rc=localrc)
             ! Instantaneous u wind (m/s) 10 m above ground
             case ('inst_zonal_wind_height10m')
               call block_data_copy(datar82d, GFS_coupling%u10mi_cpl, Atm_block, nb, offset=GFS_Control%chunk_begin(nb), rc=localrc)
@@ -3651,20 +3651,22 @@ end subroutine update_atmos_chemistry
 
   end subroutine setup_exportdata
 
-  subroutine addLsmask2grid(fcstGrid, rc)
+  subroutine addLsmask2grid(fcstGrid, Atmos, rc)
 
     use ESMF
 !
     implicit none
     type(ESMF_Grid)      :: fcstGrid
+    type (atmos_data_type), intent(in) :: Atmos
     integer, optional, intent(out) :: rc
 !
 !  local vars
-    integer isc, iec, jsc, jec
-    integer i, j, nb, ix, im
+    integer :: isc, iec, jsc, jec
+    integer :: i, j, nb, ix, im
 !    integer CLbnd(2), CUbnd(2), CCount(2), TLbnd(2), TUbnd(2), TCount(2)
     integer, allocatable  :: lsmask(:,:)
     integer(kind=ESMF_KIND_I4), pointer  :: maskPtr(:,:)
+    real(kind=ESMF_KIND_R8), pointer  :: areaPtr(:,:)
 !
     isc = GFS_control%isc
     iec = GFS_control%isc+GFS_control%nx-1
@@ -3687,6 +3689,9 @@ end subroutine update_atmos_chemistry
     call ESMF_GridAddItem(fcstGrid, itemflag=ESMF_GRIDITEM_MASK,   &
                           staggerloc=ESMF_STAGGERLOC_CENTER, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
+    call ESMF_GridAddItem(fcstGrid, itemflag=ESMF_GRIDITEM_AREA,   &
+                          staggerloc=ESMF_STAGGERLOC_CENTER, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
 
 !    call ESMF_GridGetItemBounds(fcstGrid, itemflag=ESMF_GRIDITEM_MASK,   &
 !         staggerloc=ESMF_STAGGERLOC_CENTER, computationalLBound=ClBnd,  &
@@ -3698,15 +3703,20 @@ end subroutine update_atmos_chemistry
 !    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
 
     call ESMF_GridGetItem(fcstGrid, itemflag=ESMF_GRIDITEM_MASK,   &
-                          staggerloc=ESMF_STAGGERLOC_CENTER,farrayPtr=maskPtr, rc=rc)
+         staggerloc=ESMF_STAGGERLOC_CENTER,farrayPtr=maskPtr, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
+    call ESMF_GridGetItem(fcstGrid, itemflag=ESMF_GRIDITEM_AREA,   &
+         staggerloc=ESMF_STAGGERLOC_CENTER,farrayPtr=areaPtr, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
 !    print *,'in set up grid, aft get maskptr, rc=',rc, 'size=',size(maskPtr,1),size(maskPtr,2), &
 !      'bound(maskPtr)=', LBOUND(maskPtr,1),LBOUND(maskPtr,2),UBOUND(maskPtr,1),UBOUND(maskPtr,2)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
+
 !
 !$omp parallel do default(shared) private(i,j)
     do j=jsc,jec
       do i=isc,iec
-        maskPtr(i-isc+1,j-jsc+1) = lsmask(i,j)
+         maskPtr(i-isc+1,j-jsc+1) = lsmask(i,j)
+         areaPtr(i-isc+1,j-jsc+1) = Atmos%area(i,j)
       enddo
     enddo
 !      print *,'in set set lsmask, maskPtr=', maxval(maskPtr), minval(maskPtr)
