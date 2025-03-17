@@ -1062,7 +1062,7 @@ subroutine update_atmos_model_state (Atmos, rc)
     call atmosphere_get_bottom_layer (Atm_block, DYCORE_Data)
 
     !--- if in coupled mode, set up coupled fields
-    call setup_exportdata(rc=localrc)
+    call setup_exportdata(Atmos, rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, file=__FILE__, rcToReturn=rc)) return
 
@@ -1342,7 +1342,7 @@ subroutine update_atmos_chemistry(state, rc)
   real(ESMF_KIND_R8), dimension(:,:), pointer :: aod, area, canopy, cmm,  &
     dqsfc, dtsfc, fice, flake, focn, fsnow, hpbl, nswsfc, oro, psfc, &
     q2m, rain, rainc, rca, shfsfc, slmsk, stype, swet, t2m, tsfc,    &
-    u10m, uustar, v10m, vfrac, xlai, zorl, vtype
+    u10m, uustar, v10m, vfrac, xlai, zorl
 
 ! logical, parameter :: diag = .true.
 
@@ -1600,10 +1600,6 @@ subroutine update_atmos_chemistry(state, rc)
         if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__, file=__FILE__, rcToReturn=rc)) return
 
-        call cplFieldGet(state,'vegetation_type', farrayPtr2d=vtype, rc=localrc)
-        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-          line=__LINE__, file=__FILE__, rcToReturn=rc)) return
-
       else
 
         call cplFieldGet(state,'inst_liq_nonconv_tendency_levels', &
@@ -1729,7 +1725,6 @@ subroutine update_atmos_chemistry(state, rc)
         !  stype(i,j) = real(int( GFS_Data(nb)%Sfcprop%stype(ix)+0.5 ), kind=ESMF_KIND_R8)
         !endif
         stype = real(int(reshape(GFS_Sfcprop%stype, shape(stype))+0.5), kind=ESMF_KIND_R8)
-        vtype = real(int(reshape(GFS_Sfcprop%vtype, shape(vtype))+0.5), kind=ESMF_KIND_R8)
         if (GFS_Control%isot == 1) then
           where (slmsk == 2) stype = 16._ESMF_KIND_R8
         else
@@ -1816,7 +1811,6 @@ subroutine update_atmos_chemistry(state, rc)
           write(6,'("update_atmos: vfrac  - min/max/avg",3g16.6)') minval(vfrac),  maxval(vfrac),  sum(vfrac)/size(vfrac)
           write(6,'("update_atmos: xlai   - min/max/avg",3g16.6)') minval(xlai),   maxval(xlai),   sum(xlai)/size(xlai)
           write(6,'("update_atmos: stype  - min/max/avg",3g16.6)') minval(stype),  maxval(stype),  sum(stype)/size(stype)
-          write(6,'("update_atmos: vtype  - min/max/avg",3g16.6)') minval(vtype),  maxval(vtype),  sum(vtype)/size(vtype)
         else
           write(6,'("update_atmos: flake  - min/max/avg",3g16.6)') minval(flake),  maxval(flake),  sum(flake)/size(flake)
           write(6,'("update_atmos: focn   - min/max/avg",3g16.6)') minval(focn),   maxval(focn),   sum(focn)/size(focn)
@@ -3254,7 +3248,7 @@ end subroutine update_atmos_chemistry
   end subroutine assign_importdata
 
 !
-  subroutine setup_exportdata(rc)
+  subroutine setup_exportdata(Atmos, rc)
 
     use ESMF
 
@@ -3262,6 +3256,7 @@ end subroutine update_atmos_chemistry
     use module_cplscalars, only: flds_scalar_name
 
     !--- arguments
+    type (atmos_data_type), intent(in) :: Atmos
     integer, optional, intent(out) :: rc
 
     !--- local variables
@@ -3386,13 +3381,17 @@ end subroutine update_atmos_chemistry
               call block_data_copy(datar82d, GFS_coupling%dqsfci_cpl, Atm_block, nb, -revap, spval, offset=GFS_Control%chunk_begin(nb), rc=localrc)
             ! Instantaneous precipitation rate (kg/m2/s)
             case ('inst_prec_rate')
-              call block_data_copy(datar82d, GFS_coupling%rain_cpl, Atm_block, nb, rtimek, spval, offset=GFS_Control%chunk_begin(nb), rc=localrc)
+               call block_data_copy(datar82d, GFS_coupling%rain_cpl, Atm_block, nb, rtimek, spval, offset=GFS_Control%chunk_begin(nb), rc=localrc)
+               datar82d = Atmos%lon
+
             ! Instantaneous convective precipitation rate (kg/m2/s)
             case ('inst_prec_rate_conv')
               call block_data_copy(datar82d, GFS_coupling%rainc_cpl, Atm_block, nb, rtimek, spval, offset=GFS_Control%chunk_begin(nb), rc=localrc)
             ! Instaneous snow precipitation rate (kg/m2/s)
             case ('inst_fprec_rate')
-              call block_data_copy(datar82d, GFS_coupling%snow_cpl, Atm_block, nb, rtimek, spval, offset=GFS_Control%chunk_begin(nb), rc=localrc)
+               call block_data_copy(datar82d, GFS_coupling%snow_cpl, Atm_block, nb, rtimek, spval, offset=GFS_Control%chunk_begin(nb), rc=localrc)
+               datar82d = Atmos%lat
+
             ! Instantaneous Downward long wave radiation flux (W/m**2)
             case ('inst_down_lw_flx')
               call block_data_copy(datar82d, GFS_coupling%dlwsfci_cpl, Atm_block, nb, offset=GFS_Control%chunk_begin(nb), rc=localrc)
@@ -3524,7 +3523,10 @@ end subroutine update_atmos_chemistry
             !    !    ! CHECK if tracer 1 is for specific humidity     !    !    !
             case('inst_spec_humid_height_lowest')
               call block_data_copy_or_fill(datar82d, DYCORE_data(nb)%coupling%tr_bot, 1, zeror8, Atm_block, nb, offset=1, rc=localrc)
-            case('inst_spec_humid_height_lowest_from_phys')
+
+              datar82d = Atmos%area
+
+           case('inst_spec_humid_height_lowest_from_phys')
               call block_data_copy_or_fill(datar82d, GFS_Statein%qgrs, 1, GFS_Control%ntqv, zeror8, Atm_block, nb, offset=GFS_Control%chunk_begin(nb), rc=localrc)
             ! bottom layer zonal wind (u)
             case('inst_zonal_wind_height_lowest')

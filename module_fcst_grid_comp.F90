@@ -525,7 +525,7 @@ if (rc /= ESMF_SUCCESS) write(0,*) 'rc=',rc,__FILE__,__LINE__; if(ESMF_LogFoundE
     end if
 
     ! -- initialize export fields if applicable
-    call setup_exportdata(rc=rc)
+    call setup_exportdata(Atmos, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__,  file=__FILE__)) return
 
     ! -- realize connected fields in importState
