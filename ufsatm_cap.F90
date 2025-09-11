@@ -1390,11 +1390,27 @@ module ufsatm_cap_mod
     integer, intent(out)        :: rc
     real(kind=8)                :: MPI_Wtime, timers
 
+    ! debug
+    type(ESMF_Clock) :: mclock
+    integer(kind=8) :: advanceCount = 0
+    character(len=4) :: ctmp
 !-----------------------------------------------------------------------------
 
     rc = ESMF_SUCCESS
+
+
+    !debug
+    call ESMF_GridCompGet(gcomp, clock=mclock, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
+    ! get the number of times the clock was advanced
+    call ESMF_ClockGet(mclock, advanceCount=advanceCount, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
+
+    ctmp=''
+    if (mod(advancecount,int(3600./dt_atmos)) == 0) ctmp = 'Rad0'
+
     timers = MPI_Wtime()
-    if (mype == 0) call ufs_trace("ufsatm", "ModelAdvance", "B")
+    if (mype == 0) call ufs_trace("ufsatm", "ModelAdvance"//trim(ctmp), "B")
     if(write_runtimelog .and. timere>0. .and. lprint) print *,'in ufsatm_cap, time between atmosphere run step=', timers-timere,mype
 
     if (profile_memory) call ESMF_VMLogMemInfo("Entering UFSATM ModelAdvance: ")
@@ -1409,7 +1425,7 @@ module ufsatm_cap_mod
 
     timere = MPI_Wtime()
     if(write_runtimelog .and. lprint) print *,'in ufsatm_cap, time in atmosphere run step=', timere-timers, mype
-    if (mype == 0) call ufs_trace("ufsatm", "ModelAdvance", "E")
+    if (mype == 0) call ufs_trace("ufsatm", "ModelAdvance"//trim(ctmp), "E")
 
   end subroutine ModelAdvance
 
@@ -1431,7 +1447,6 @@ module ufsatm_cap_mod
 
     rc = ESMF_SUCCESS
     if (mype == 0) call ufs_trace("ufsatm", "ModelAdvance_phase1", "B")
-
     timep1rs = MPI_Wtime()
     if(write_runtimelog .and. timep2re>0. .and. lprint) print *,'in ufsatm_cap, time between ufsatm run phase2 and phase1 ', timep1rs-timep2re,mype
 
