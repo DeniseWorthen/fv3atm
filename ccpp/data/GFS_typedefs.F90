@@ -69,7 +69,7 @@ module GFS_typedefs
   ! LTP=0: no extra top layer
   integer, parameter :: LTP = 0   ! no extra top layer
   !integer, parameter :: LTP = 1   ! add an extra top layer
-
+  integer, parameter :: con_zero = 0
 !----------------
 ! Data Containers
 !----------------
@@ -1707,6 +1707,8 @@ module GFS_typedefs
 !     logical               :: land_iau_do_stcsmc_adjustment
 !     real(kind=kind_phys)  :: land_iau_min_T_increment
 
+    character(len=2)     :: sfc_file_version = 'V1' !< version number of input surface file
+
     contains
       procedure :: init            => control_initialize
       procedure :: init_chemistry  => control_chemistry_initialize
@@ -1887,7 +1889,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: cv  (:)     => null()  !< fraction of convective cloud ; phys
     real (kind=kind_phys), pointer :: cvt (:)     => null()  !< convective cloud top pressure in pa ; phys
     real (kind=kind_phys), pointer :: cvb (:)     => null()  !< convective cloud bottom pressure in pa ; phys, cnvc90
-
+    real (kind=kind_phys), pointer :: cnvw (:,:)  => null()  !< convective cloud fractions
     contains
       procedure :: create  => cldprop_create  !<   allocate array data
   end type GFS_cldprop_type
@@ -7636,11 +7638,13 @@ module GFS_typedefs
     allocate (Cldprop%cv  (IM))
     allocate (Cldprop%cvt (IM))
     allocate (Cldprop%cvb (IM))
+    allocate (Cldprop%cnvw(IM, Model%levs))
 
     Cldprop%cv  = clear_val
     Cldprop%cvt = clear_val
     Cldprop%cvb = clear_val
-
+    Cldprop%cnvw = clear_val
+    
   end subroutine cldprop_create
 
 
