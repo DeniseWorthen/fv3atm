@@ -51,7 +51,9 @@
 #ifdef INLINE_POST
      use post_fv3,            only : post_run_fv3
 #endif
+#ifdef UFS_TRACING
       use ufs_trace_mod
+#endif
 !
 !-----------------------------------------------------------------------
 !
@@ -119,41 +121,45 @@
        type(ESMF_GridComp)  :: wrt_comp
        integer, intent(out) :: rc
 
-        type(ESMF_VM)               :: vm
+       type(ESMF_VM)               :: vm
 
-        rc = ESMF_SUCCESS
+       rc = ESMF_SUCCESS
 
-        call ESMF_GridCompGet(wrt_comp, name=comp_name, vm=vm, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
+       call ESMF_GridCompGet(wrt_comp, name=comp_name, vm=vm, rc=rc)
+       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
 
-        call ESMF_VMGet(vm, localpet=mype, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
+       call ESMF_VMGet(vm, localpet=mype, rc=rc)
+       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
 
-        if (mype == 0) call ufs_trace_init()
-        if (mype == 0) call ufs_trace(comp_name, "SetServices", "B")
+#ifdef UFS_TRACING
+       if (mype == 0) call ufs_trace_init()
+       if (mype == 0) call ufs_trace(comp_name, "SetServices", "B")
+#endif
 
-        call ESMF_GridCompSetEntryPoint(wrt_comp, ESMF_METHOD_INITIALIZE, phase=1, &
-                                        userRoutine=wrt_initialize_p1, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
+       call ESMF_GridCompSetEntryPoint(wrt_comp, ESMF_METHOD_INITIALIZE, phase=1, &
+                                       userRoutine=wrt_initialize_p1, rc=rc)
+       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
 
-        call ESMF_GridCompSetEntryPoint(wrt_comp, ESMF_METHOD_INITIALIZE, phase=2, &
+       call ESMF_GridCompSetEntryPoint(wrt_comp, ESMF_METHOD_INITIALIZE, phase=2, &
                                        userRoutine=wrt_initialize_p2, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
+       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
 
-        call ESMF_GridCompSetEntryPoint(wrt_comp, ESMF_METHOD_INITIALIZE, phase=3, &
+       call ESMF_GridCompSetEntryPoint(wrt_comp, ESMF_METHOD_INITIALIZE, phase=3, &
                                        userRoutine=wrt_initialize_p3, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
+       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
 
-        call ESMF_GridCompSetEntryPoint(wrt_comp, ESMF_METHOD_RUN, &
-             userRoutine=wrt_run, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
+       call ESMF_GridCompSetEntryPoint(wrt_comp, ESMF_METHOD_RUN, &
+                                       userRoutine=wrt_run, rc=rc)
+       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
 
-        call ESMF_GridCompSetEntryPoint(wrt_comp, ESMF_METHOD_FINALIZE, &
-                                        userRoutine=wrt_finalize, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
+       call ESMF_GridCompSetEntryPoint(wrt_comp, ESMF_METHOD_FINALIZE, &
+                                       userRoutine=wrt_finalize, rc=rc)
+       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
 
-        if (mype == 0) call ufs_trace(comp_name, "SetServices", "E")
-      end subroutine SetServices
+#ifdef UFS_TRACING
+       if (mype == 0) call ufs_trace(comp_name, "SetServices", "E")
+#endif
+     end subroutine SetServices
 !
 !-----------------------------------------------------------------------
 !#######################################################################
@@ -243,8 +249,10 @@
 !***********************************************************************
 !-----------------------------------------------------------------------
 !
-      rc = ESMF_SUCCESS
-      if (mype == 0) call ufs_trace(comp_name, "wrt_initialize_p1", "B")
+     rc = ESMF_SUCCESS
+#ifdef UFS_TRACING
+     if (mype == 0) call ufs_trace(comp_name, "wrt_initialize_p1", "B")
+#endif
 !
 !-----------------------------------------------------------------------
 !***  initialize the write component timers.
@@ -1460,9 +1468,10 @@
 !
 !-----------------------------------------------------------------------
 !
-
-      if (mype == 0) call ufs_trace(comp_name, "wrt_initialize_p1", "E")
-      end subroutine wrt_initialize_p1
+#ifdef UFS_TRACING
+     if (mype == 0) call ufs_trace(comp_name, "wrt_initialize_p1", "E")
+#endif
+     end subroutine wrt_initialize_p1
 !
 !-----------------------------------------------------------------------
 !#######################################################################
@@ -1497,8 +1506,10 @@
 !***********************************************************************
 !-----------------------------------------------------------------------
 !
-      rc = ESMF_SUCCESS
-      if (mype == 0) call ufs_trace(comp_name, "wrt_initialize_p2", "B")
+     rc = ESMF_SUCCESS
+#ifdef UFS_TRACING
+     if (mype == 0) call ufs_trace(comp_name, "wrt_initialize_p2", "B")
+#endif
 !
      call ESMF_InfoGetFromHost(imp_state_write, info=info, rc=rc)
      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
@@ -1563,8 +1574,10 @@
 
 !-----------------------------------------------------------------------
 !
-      if (mype == 0) call ufs_trace(comp_name, "wrt_initialize_p2", "E")
-      end subroutine wrt_initialize_p2
+#ifdef UFS_TRACING
+     if (mype == 0) call ufs_trace(comp_name, "wrt_initialize_p2", "E")
+#endif
+     end subroutine wrt_initialize_p2
 !
 !-----------------------------------------------------------------------
 !#######################################################################
@@ -1600,8 +1613,10 @@
 !***********************************************************************
 !-----------------------------------------------------------------------
 !
-      rc = ESMF_SUCCESS
-      if (mype == 0) call ufs_trace(comp_name, "wrt_initialize_p3", "B")
+     rc = ESMF_SUCCESS
+#ifdef UFS_TRACING
+     if (mype == 0) call ufs_trace(comp_name, "wrt_initialize_p3", "B")
+#endif
 !
      call ESMF_InfoGetFromHost(imp_state_write, info=info, rc=rc)
      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
@@ -1664,8 +1679,10 @@
 
 !-----------------------------------------------------------------------
 !
-      if (mype == 0) call ufs_trace(comp_name, "wrt_initialize_p3", "E")
-      end subroutine wrt_initialize_p3
+#ifdef UFS_TRACING
+     if (mype == 0) call ufs_trace(comp_name, "wrt_initialize_p3", "E")
+#endif
+     end subroutine wrt_initialize_p3
 !
 !-----------------------------------------------------------------------
 !#######################################################################
@@ -1701,7 +1718,7 @@
      type(write_wrap)                      :: wrap
      type(wrt_internal_state),pointer      :: wrt_int_state
 !
-      integer                               :: i,j,n,m, nolog, grid_id, localPet
+     integer                               :: i,j,n,m, nolog, grid_id, localPet
 !
      integer                               :: nf_hours,nf_seconds,nf_minutes
      integer                               :: fcst_seconds
@@ -1757,9 +1774,11 @@
 !***********************************************************************
 !-----------------------------------------------------------------------
 !
-      tbeg = MPI_Wtime()
-      if (mype == 0) call ufs_trace(comp_name, "wrt_run", "B")
-      rc   = esmf_success
+     tbeg = MPI_Wtime()
+#ifdef UFS_TRACING
+     if (mype == 0) call ufs_trace(comp_name, "wrt_run", "B")
+#endif
+     rc   = esmf_success
 !
 !-----------------------------------------------------------------------
 !***  get the current write grid comp name, and internal state
@@ -2523,7 +2542,9 @@
 !
 !-----------------------------------------------------------------------
 !
+#ifdef UFS_TRACING
       if (mype == 0) call ufs_trace(comp_name, "wrt_run", "E")
+#endif
       END SUBROUTINE wrt_run
 !
 !-----------------------------------------------------------------------
@@ -2556,7 +2577,9 @@
 !-----------------------------------------------------------------------
 !
       rc=ESMF_SUCCESS
+#ifdef UFS_TRACING
       if (mype == 0) call ufs_trace(comp_name, "wrt_finalize", "B")
+#endif
 !
 !-----------------------------------------------------------------------
 !***  retrieve the write component's esmf internal state(used later for
@@ -2575,7 +2598,9 @@
 !
 !-----------------------------------------------------------------------
 !
+#ifdef UFS_TRACING
       if (mype == 0) call ufs_trace(comp_name, "wrt_finalize", "E")
+#endif
     end subroutine wrt_finalize
 !
 !-----------------------------------------------------------------------
