@@ -544,17 +544,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: dtsfcin_cpl(:)          => null()   !< aoi_fld%dtsfcin(item,lan)
     real (kind=kind_phys), pointer :: dqsfcin_cpl(:)          => null()   !< aoi_fld%dqsfcin(item,lan)
     real (kind=kind_phys), pointer :: ulwsfcin_cpl(:)         => null()   !< aoi_fld%ulwsfcin(item,lan)
-!   real (kind=kind_phys), pointer :: tseain_cpl(:)           => null()   !< aoi_fld%tseain(item,lan)
-!   real (kind=kind_phys), pointer :: tisfcin_cpl(:)          => null()   !< aoi_fld%tisfcin(item,lan)
-!   real (kind=kind_phys), pointer :: ficein_cpl(:)           => null()   !< aoi_fld%ficein(item,lan)
-!   real (kind=kind_phys), pointer :: hicein_cpl(:)           => null()   !< aoi_fld%hicein(item,lan)
     real (kind=kind_phys), pointer :: hsnoin_cpl(:)           => null()   !< aoi_fld%hsnoin(item,lan)
-!   real (kind=kind_phys), pointer :: sfc_alb_nir_dir_cpl(:)  => null()   !< sfc nir albedo for direct rad
-!   real (kind=kind_phys), pointer :: sfc_alb_nir_dif_cpl(:)  => null()   !< sfc nir albedo for diffuse rad
-!   real (kind=kind_phys), pointer :: sfc_alb_vis_dir_cpl(:)  => null()   !< sfc vis albedo for direct rad
-!   real (kind=kind_phys), pointer :: sfc_alb_vis_dif_cpl(:)  => null()   !< sfc vis albedo for diffuse rad
-    !--- only variable needed for cplwav2atm=.TRUE.
-!   real (kind=kind_phys), pointer :: zorlwav_cpl(:)          => null()   !< roughness length from wave model
     !--- also needed for ice/ocn coupling
     real (kind=kind_phys), pointer :: slimskin_cpl(:)=> null()   !< aoi_fld%slimskin(item,lan)
     !--- variables needed for use_med_flux =.TRUE.
@@ -847,7 +837,7 @@ module GFS_typedefs
     integer              :: tend_opt_shal_conv
     integer              :: tend_opt_mp
     integer              :: tend_opt_stoch
-    
+
     logical              :: gfs_phys_time_vary_is_init=.false. !< GFS_phys_time_vary interstitial initialization flag
 
 !--- radiation control parameters
@@ -1096,7 +1086,7 @@ module GFS_typedefs
     real(kind=kind_phys) :: rr_min          !< multiplicative tuning parameter for microphysical sedimentation minimum threshold
     real(kind=kind_phys) :: fs_fac_rain     !< adjustment for rain fall speed
     real(kind=kind_phys) :: fs_fac_snow     !< adjustment for snow fall speed
-    
+
     !--- GFDL microphysical paramters
     logical              :: lgfdlmprad      !< flag for GFDL mp scheme and radiation consistency
     logical              :: phys_hydrostatic
@@ -3111,13 +3101,6 @@ module GFS_typedefs
       Coupling%tsfci_cpl = clear_val
     endif
 
-!   if (Model%cplwav2atm) then
-      !--- incoming quantities
-!     allocate (Coupling%zorlwav_cpl (IM))
-
-!     Coupling%zorlwav_cpl  = clear_val
-!   endif
-
     ! -- additional coupling options for air quality
     if (Model%cplflx .or. Model%cpllnd .or. Model%cpl_fire .or. (Model%cplaqm .and. .not.Model%cplflx)) then
       allocate (Coupling%psurfi_cpl  (IM))
@@ -3175,15 +3158,7 @@ module GFS_typedefs
       allocate (Coupling%dtsfcin_cpl         (IM))
       allocate (Coupling%dqsfcin_cpl         (IM))
       allocate (Coupling%ulwsfcin_cpl        (IM))
-!     allocate (Coupling%tseain_cpl          (IM))
-!     allocate (Coupling%tisfcin_cpl         (IM))
-!     allocate (Coupling%ficein_cpl          (IM))
-!     allocate (Coupling%hicein_cpl          (IM))
       allocate (Coupling%hsnoin_cpl          (IM))
-!     allocate (Coupling%sfc_alb_nir_dir_cpl (IM))
-!     allocate (Coupling%sfc_alb_nir_dif_cpl (IM))
-!     allocate (Coupling%sfc_alb_vis_dir_cpl (IM))
-!     allocate (Coupling%sfc_alb_vis_dif_cpl (IM))
 
       Coupling%slimskin_cpl          = clear_val
       Coupling%dusfcin_cpl           = clear_val
@@ -3191,15 +3166,7 @@ module GFS_typedefs
       Coupling%dtsfcin_cpl           = clear_val
       Coupling%dqsfcin_cpl           = clear_val
       Coupling%ulwsfcin_cpl          = clear_val
-!     Coupling%tseain_cpl            = clear_val
-!     Coupling%tisfcin_cpl           = clear_val
-!     Coupling%ficein_cpl            = clear_val
-!     Coupling%hicein_cpl            = clear_val
       Coupling%hsnoin_cpl            = clear_val
-!     Coupling%sfc_alb_nir_dir_cpl   = clear_val
-!     Coupling%sfc_alb_nir_dif_cpl   = clear_val
-!     Coupling%sfc_alb_vis_dir_cpl   = clear_val
-!     Coupling%sfc_alb_vis_dif_cpl   = clear_val
 
       ! -- Coupling options to retrive atmosphere-ocean fluxes from mediator
       if (Model%use_med_flux) then
@@ -3757,7 +3724,7 @@ module GFS_typedefs
     real(kind=kind_phys) :: rr_min         = 1000.0             !< multiplicative tuning parameter for microphysical sedimentation minimum threshold
     real(kind=kind_phys) :: fs_fac_rain    = 1.0                !< adjustment for rain fall speed
     real(kind=kind_phys) :: fs_fac_snow    = 1.0                !< adjustment for snow fall speed
-    
+
     !--- GFDL microphysical parameters
     logical              :: lgfdlmprad     = .false.            !< flag for GFDLMP radiation interaction
 
@@ -4676,7 +4643,7 @@ module GFS_typedefs
     Model%tend_opt_shal_conv  = tend_opt_shal_conv
     Model%tend_opt_mp         = tend_opt_mp
     Model%tend_opt_stoch      = tend_opt_stoch
-    
+
     Model%ipr = min(minval(Model%blksz), 10)
 !--- coupling parameters
     Model%cplflx           = cplflx

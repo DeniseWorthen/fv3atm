@@ -2251,7 +2251,7 @@ end subroutine update_atmos_chemistry
                     endif
                   enddo
                 enddo
-                if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get sfc_alb_nir_dif_cpl from mediator'
+                if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get albedo for near-IR diffuse radiation from mediator'
               endif
             endif
 !
@@ -2272,7 +2272,7 @@ end subroutine update_atmos_chemistry
                     endif
                   enddo
                 enddo
-                if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get sfc_alb_nir_dir_cpl from mediator'
+                if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get albedo for near-IR direct radiation from mediator'
               endif
             endif
 !
@@ -2293,7 +2293,7 @@ end subroutine update_atmos_chemistry
                     endif
                   enddo
                 enddo
-                if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get sfc_alb_vis_dif_cpl from mediator'
+                if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get albedo for Visible diffuse radiation from mediator'
               endif
             endif
 
@@ -2315,7 +2315,7 @@ end subroutine update_atmos_chemistry
                     endif
                   enddo
                 enddo
-                if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get inst_ice_vis_dir_albedo from mediator'
+                if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get albedo for Visible direct radiation from mediator'
               endif
             endif
           endif
