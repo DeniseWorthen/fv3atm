@@ -539,14 +539,14 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: sfculw(:)      => null()   !< total sky sfc upward lw flux ( w/m**2 )
 
 !--- incoming quantities
-    real (kind=kind_phys), pointer :: dusfcin_cpl(:)          => null()   !< aoi_fld%dusfcin(item,lan)
-    real (kind=kind_phys), pointer :: dvsfcin_cpl(:)          => null()   !< aoi_fld%dvsfcin(item,lan)
-    real (kind=kind_phys), pointer :: dtsfcin_cpl(:)          => null()   !< aoi_fld%dtsfcin(item,lan)
-    real (kind=kind_phys), pointer :: dqsfcin_cpl(:)          => null()   !< aoi_fld%dqsfcin(item,lan)
-    real (kind=kind_phys), pointer :: ulwsfcin_cpl(:)         => null()   !< aoi_fld%ulwsfcin(item,lan)
-    real (kind=kind_phys), pointer :: hsnoin_cpl(:)           => null()   !< aoi_fld%hsnoin(item,lan)
+    real (kind=kind_phys), pointer :: dusfcin_cpl(:)          => null()   !< sfc u momentum flux
+    real (kind=kind_phys), pointer :: dvsfcin_cpl(:)          => null()   !< sfc v momentum flux
+    real (kind=kind_phys), pointer :: dtsfcin_cpl(:)          => null()   !< sfc sensible heat flux input
+    real (kind=kind_phys), pointer :: dqsfcin_cpl(:)          => null()   !< sfc latent heat flux
+    real (kind=kind_phys), pointer :: ulwsfcin_cpl(:)         => null()   !< sfc upwelling LW flux
+    real (kind=kind_phys), pointer :: hsnoin_cpl(:)           => null()   !< sfc snow depth over sea ice
     !--- also needed for ice/ocn coupling
-    real (kind=kind_phys), pointer :: slimskin_cpl(:)=> null()   !< aoi_fld%slimskin(item,lan)
+    real (kind=kind_phys), pointer :: slimskin_cpl(:)=> null()   !< sea/land/ice mask
     !--- variables needed for use_med_flux =.TRUE.
     real (kind=kind_phys), pointer :: dusfcin_med(:)         => null()   !< sfc u momentum flux over ocean
     real (kind=kind_phys), pointer :: dvsfcin_med(:)         => null()   !< sfc v momentum flux over ocean
