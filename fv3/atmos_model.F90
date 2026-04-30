@@ -1879,7 +1879,7 @@ subroutine assign_importdata(atmtime,atmtimestep,isregional,ngrids,rc)
   type(ESMF_Field)              :: dbgField
   logical                       :: add2FB
   character(len=128)            :: fname
-  character(19)                 :: timestring
+  character(15)                 :: timestring
   character(len=:), allocatable :: fieldlist(:)
   integer                       :: nfields
   integer                       :: iyear, imonth, iday, ihour, iminute, isecond
@@ -2427,7 +2427,7 @@ subroutine assign_importdata(atmtime,atmtimestep,isregional,ngrids,rc)
 
   if (GFS_control%cpl_imp_dbg) then
     call get_date(atmtime+atmtimestep,iyear,imonth,iday,ihour,iminute,isecond)
-    write(timestring, "(I4.4,'-',I2.2,'-',I2.2,'T',I2.2,':',I2.2,':',I2.2)") iyear,imonth,iday,ihour,iminute,isecond
+    write(timestring, "(I4.4,I2.2,I2.2,'.',I2.2,I2.2,I2.2)") iyear,imonth,iday,ihour,iminute,isecond
     if (isregional) then
       fname = 'fv3_merge_'//trim(timestring)//'.nc'
     else
@@ -2439,9 +2439,9 @@ subroutine assign_importdata(atmtime,atmtimestep,isregional,ngrids,rc)
     if (nfields > 0) then
       call write_FB(FBcpl2phys, trim(fname), nfields, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
-      call ESMF_FieldBundleDestroy(FBcpl2phys, rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
     endif
+    call ESMF_FieldBundleDestroy(FBcpl2phys, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
   endif
   rc=0
 
