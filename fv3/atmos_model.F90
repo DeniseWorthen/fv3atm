@@ -1871,7 +1871,6 @@ subroutine assign_importdata(atmtime,atmtimestep,isregional,ngrids,rc)
   real(kind=GFS_kind_phys), dimension(:,:), pointer  :: dataptr
   logical,                  dimension(:,:), pointer  :: mergeflg
   real(kind=GFS_kind_phys)                           :: tem, ofrac
-  logical :: lcpl_fice
   real(ESMF_KIND_R8), parameter :: missing_value = 9.99e20_ESMF_KIND_R8
 
   type(ESMF_Grid)               :: grid
@@ -1903,7 +1902,6 @@ subroutine assign_importdata(atmtime,atmtimestep,isregional,ngrids,rc)
   jsc = GFS_control%jsc
   jec = GFS_control%jsc+GFS_control%ny-1
   nk  = Atm_block%npz
-  lcpl_fice = .false.
 
   allocate(dataptr(isc:iec,jsc:jec))
   allocate(mergeflg(isc:iec,jsc:jec))
@@ -1931,7 +1929,7 @@ subroutine assign_importdata(atmtime,atmtimestep,isregional,ngrids,rc)
 
     ! put the data from local cubed sphere grid to column grid for phys
     add2FB = .false.
-    dataptr = -99999.0
+    dataptr = -GFS_control%huge
     mergeflg = .false.
     call ESMF_FieldGet(importFields(n), dimCount=dimCount ,typekind=datatype, name=impfield_name, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
@@ -1954,63 +1952,62 @@ subroutine assign_importdata(atmtime,atmtimestep,isregional,ngrids,rc)
       endif
     endif
 
-    if (dataptr(isc,jsc) > -99998.0) then
-
-      if(GFS_control%cplwav2atm) then
-        ! get sea-state dependent surface roughness
-        !----------------------------
-        fldname = 'wave_z0_roughness_length'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            add2FB = .true.
-            call copy2block(GFS_Sfcprop%zorlwav, dataptr, mask=GFS_Sfcprop%oceanfrac)
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'get wave roughness from mediator'
-          endif
+    if(GFS_control%cplwav2atm) then
+      ! get sea-state dependent surface roughness
+      !----------------------------
+      fldname = 'wave_z0_roughness_length'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          add2FB = .true.
+          call copy2block(GFS_Sfcprop%zorlwav, dataptr, mask=GFS_Sfcprop%oceanfrac)
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'get wave roughness from mediator'
         endif
-      endif ! GFS_control%cplwav2atm
+      endif
+    endif ! GFS_control%cplwav2atm
 
-      if (GFS_control%cplocn2atm) then
-        ! get sst:  sst needs to be adjusted by land sea mask before passing to fv3
-        !--------------------------------------------------------------------------
-        fldname = 'sea_surface_temperature'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            add2FB = .true.
-            call copy2block(GFS_Sfcprop%tsfco, dataptr, mask=GFS_Sfcprop%oceanfrac, validmin=150.0_GFS_kind_phys)
-            if (GFS_control%cpl_imp_mrg) then
-              call merge_importfield(GFS_Sfcprop%tsfco, GFS_Sfcprop%tsfc, mergeflg, mask=GFS_Sfcprop%oceanfrac)
-            end if
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'get sst from mediator'
-          endif
-        end if
-        ! get zonal ocean current:
-        !--------------------------------------------------------------------------
-        fldname = 'ocn_current_zonal'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            add2FB = .true.
-            call copy2block(GFS_Sfcprop%usfco, dataptr, mask=GFS_Sfcprop%oceanfrac)
-            if (GFS_control%cpl_imp_mrg) then
-              call merge_importfield(GFS_Sfcprop%usfco, zero, mergeflg, mask=GFS_Sfcprop%oceanfrac)
-            end if
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'get usfco from mediator'
+    if (GFS_control%cplocn2atm) then
+      ! get sst:  sst needs to be adjusted by land sea mask before passing to fv3
+      !--------------------------------------------------------------------------
+      fldname = 'sea_surface_temperature'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          add2FB = .true.
+          call copy2block(GFS_Sfcprop%tsfco, dataptr, mask=GFS_Sfcprop%oceanfrac, validmin=150.0_GFS_kind_phys)
+          if (GFS_control%cpl_imp_mrg) then
+            call merge_importfield(GFS_Sfcprop%tsfco, GFS_Sfcprop%tsfc, mergeflg, mask=GFS_Sfcprop%oceanfrac)
           end if
-        end if
-        ! get meridional ocean current:
-        !--------------------------------------------------------------------------
-        fldname = 'ocn_current_merid'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            add2FB = .true.
-            call copy2block(GFS_Sfcprop%vsfco, dataptr, mask=GFS_Sfcprop%oceanfrac)
-            if (GFS_control%cpl_imp_mrg) then
-              call merge_importfield(GFS_Sfcprop%vsfco, zero, mergeflg, mask=GFS_Sfcprop%oceanfrac)
-            end if
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'get vsfco from mediator'
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'get sst from mediator'
+        endif
+      end if
+      ! get zonal ocean current:
+      !--------------------------------------------------------------------------
+      fldname = 'ocn_current_zonal'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          add2FB = .true.
+          call copy2block(GFS_Sfcprop%usfco, dataptr, mask=GFS_Sfcprop%oceanfrac)
+          if (GFS_control%cpl_imp_mrg) then
+            call merge_importfield(GFS_Sfcprop%usfco, zero, mergeflg, mask=GFS_Sfcprop%oceanfrac)
           end if
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'get usfco from mediator'
         end if
-      end if ! GFS_control%cplocn2atm
+      end if
+      ! get meridional ocean current:
+      !--------------------------------------------------------------------------
+      fldname = 'ocn_current_merid'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          add2FB = .true.
+          call copy2block(GFS_Sfcprop%vsfco, dataptr, mask=GFS_Sfcprop%oceanfrac)
+          if (GFS_control%cpl_imp_mrg) then
+            call merge_importfield(GFS_Sfcprop%vsfco, zero, mergeflg, mask=GFS_Sfcprop%oceanfrac)
+          end if
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'get vsfco from mediator'
+        end if
+      end if
+    end if ! GFS_control%cplocn2atm
 
+    if (GFS_control%cplflx .and. GFS_control%cplice) then
       ! get sea ice surface temperature
       !--------------------------------
       fldname = 'sea_ice_surface_temperature'
@@ -2026,7 +2023,6 @@ subroutine assign_importdata(atmtime,atmtimestep,isregional,ngrids,rc)
       fldname = 'ice_fraction'
       if (trim(impfield_name) == trim(fldname)) then
         if (importFieldsValid(queryImportFields(fldname))) then
-          lcpl_fice = .true.
           add2FB = .true.
           call copy2block(GFS_Sfcprop%fice, dataptr, mask=GFS_Sfcprop%oceanfrac)
           if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get fice from mediator'
@@ -2137,176 +2133,175 @@ subroutine assign_importdata(atmtime,atmtimestep,isregional,ngrids,rc)
           endif
         endif
       endif ! GFS_control%use_cice_alb
+    endif ! GFS_control%cplflx .and. GFS_control%cplice
 
-      if (GFS_control%use_med_flux) then
-        ! get upward LW flux: for open ocean
-        !----------------------------------------------
-        fldname = 'lwup_flx_ocn'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            call copy2block(GFS_Coupling%ulwsfcin_med, dataptr, mask=GFS_Sfcprop%oceanfrac, flipsign=.true.)
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get lwflx for open ocean from mediator'
-          endif
+    if (GFS_control%use_med_flux) then
+      ! get upward LW flux: for open ocean
+      !----------------------------------------------
+      fldname = 'lwup_flx_ocn'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          call copy2block(GFS_Coupling%ulwsfcin_med, dataptr, mask=GFS_Sfcprop%oceanfrac, flipsign=.true.)
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get lwflx for open ocean from mediator'
         endif
-        ! get latent heat flux: for open ocean
-        !------------------------------------------------
-        fldname = 'laten_heat_flx_atm_into_ocn'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            call copy2block(GFS_Coupling%dqsfcin_med, dataptr, mask=GFS_Sfcprop%oceanfrac, flipsign=.true.)
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get laten_heat for open ocean from mediator'
-          endif
+      endif
+      ! get latent heat flux: for open ocean
+      !------------------------------------------------
+      fldname = 'laten_heat_flx_atm_into_ocn'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          call copy2block(GFS_Coupling%dqsfcin_med, dataptr, mask=GFS_Sfcprop%oceanfrac, flipsign=.true.)
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get laten_heat for open ocean from mediator'
         endif
-        ! get sensible heat flux: for open ocean
-        !--------------------------------------------------
-        fldname = 'sensi_heat_flx_atm_into_ocn'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            call copy2block(GFS_Coupling%dtsfcin_med, dataptr, mask=GFS_Sfcprop%oceanfrac, flipsign=.true.)
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get sensi_heat for open ocean from mediator'
-          endif
+      endif
+      ! get sensible heat flux: for open ocean
+      !--------------------------------------------------
+      fldname = 'sensi_heat_flx_atm_into_ocn'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          call copy2block(GFS_Coupling%dtsfcin_med, dataptr, mask=GFS_Sfcprop%oceanfrac, flipsign=.true.)
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get sensi_heat for open ocean from mediator'
         endif
-        ! get zonal compt of momentum flux: for open ocean
-        !------------------------------------------------------------
-        fldname = 'stress_on_air_ocn_zonal'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            call copy2block(GFS_Coupling%dusfcin_med, dataptr, mask=GFS_Sfcprop%oceanfrac, flipsign=.true.)
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get zonal_moment_flx for open ocean from mediator'
-          endif
+      endif
+      ! get zonal compt of momentum flux: for open ocean
+      !------------------------------------------------------------
+      fldname = 'stress_on_air_ocn_zonal'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          call copy2block(GFS_Coupling%dusfcin_med, dataptr, mask=GFS_Sfcprop%oceanfrac, flipsign=.true.)
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get zonal_moment_flx for open ocean from mediator'
         endif
-        ! get meridional compt of momentum flux: for open ocean
-        !-----------------------------------------------------------------
-        fldname = 'stress_on_air_ocn_merid'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            call copy2block(GFS_Coupling%dvsfcin_med, dataptr, mask=GFS_Sfcprop%oceanfrac, flipsign=.true.)
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get merid_moment_flx for open ocean from mediator'
-          endif
+      endif
+      ! get meridional compt of momentum flux: for open ocean
+      !-----------------------------------------------------------------
+      fldname = 'stress_on_air_ocn_merid'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          call copy2block(GFS_Coupling%dvsfcin_med, dataptr, mask=GFS_Sfcprop%oceanfrac, flipsign=.true.)
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get merid_moment_flx for open ocean from mediator'
         endif
-      end if ! GFS_control%use_med_flux
+      endif
+    end if ! GFS_control%use_med_flux
 
-      if (GFS_control%cpllnd .and. GFS_control%cpllnd2atm) then
-        ! get surface snow area fraction: over land
-        !------------------------------------------------
-        fldname = 'inst_snow_area_fraction_lnd'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            call copy2block(GFS_Coupling%sncovr1_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get snow area fraction from land'
-          endif
+    if (GFS_control%cpllnd .and. GFS_control%cpllnd2atm) then
+      ! get surface snow area fraction: over land
+      !------------------------------------------------
+      fldname = 'inst_snow_area_fraction_lnd'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          call copy2block(GFS_Coupling%sncovr1_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get snow area fraction from land'
         endif
-        ! get latent heat flux: over land
-        !------------------------------------------------
-        fldname = 'inst_laten_heat_flx_lnd'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            call copy2block(GFS_Coupling%evap_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get latent heat flux from land'
-          endif
+      endif
+      ! get latent heat flux: over land
+      !------------------------------------------------
+      fldname = 'inst_laten_heat_flx_lnd'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          call copy2block(GFS_Coupling%evap_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get latent heat flux from land'
         endif
-        ! get sensible heat flux: over land
-        !--------------------------------------------------
-        fldname = 'inst_sensi_heat_flx_lnd'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            call copy2block(GFS_Coupling%hflx_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get sensible heat flux from land'
-          endif
+      endif
+      ! get sensible heat flux: over land
+      !--------------------------------------------------
+      fldname = 'inst_sensi_heat_flx_lnd'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          call copy2block(GFS_Coupling%hflx_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get sensible heat flux from land'
         endif
-        ! get surface upward potential latent heat flux: over land
-        !------------------------------------------------
-        fldname = 'inst_potential_laten_heat_flx_lnd'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            call copy2block(GFS_Coupling%ep_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get potential latent heat flux from land'
-          endif
+      endif
+      ! get surface upward potential latent heat flux: over land
+      !------------------------------------------------
+      fldname = 'inst_potential_laten_heat_flx_lnd'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          call copy2block(GFS_Coupling%ep_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get potential latent heat flux from land'
         endif
-        ! get 2m air temperature: over land
-        !------------------------------------------------
-        fldname = 'inst_temp_height2m_lnd'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            call copy2block(GFS_Coupling%t2mmp_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get temperature at 2m from land'
-          endif
+      endif
+      ! get 2m air temperature: over land
+      !------------------------------------------------
+      fldname = 'inst_temp_height2m_lnd'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          call copy2block(GFS_Coupling%t2mmp_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get temperature at 2m from land'
         endif
-        ! get 2m specific humidity: over land
-        !------------------------------------------------
-        fldname = 'inst_spec_humid_height2m_lnd'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            call copy2block(GFS_Coupling%q2mp_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get specific humidity at 2m from land'
-          endif
+      endif
+      ! get 2m specific humidity: over land
+      !------------------------------------------------
+      fldname = 'inst_spec_humid_height2m_lnd'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          call copy2block(GFS_Coupling%q2mp_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get specific humidity at 2m from land'
         endif
-        ! get specific humidity: over land
-        !------------------------------------------------
-        fldname = 'inst_spec_humid_lnd'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            call copy2block(GFS_Coupling%qsurf_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get specific humidity from land'
-          endif
+      endif
+      ! get specific humidity: over land
+      !------------------------------------------------
+      fldname = 'inst_spec_humid_lnd'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          call copy2block(GFS_Coupling%qsurf_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get specific humidity from land'
         endif
-        ! get upward heat flux in soil
-        !------------------------------------------------
-        fldname = 'inst_upward_heat_flux_lnd'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            call copy2block(GFS_Coupling%gflux_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get upward heat flux from land'
-          endif
+      endif
+      ! get upward heat flux in soil
+      !------------------------------------------------
+      fldname = 'inst_upward_heat_flux_lnd'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          call copy2block(GFS_Coupling%gflux_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get upward heat flux from land'
         endif
-        ! get surface runoff in soil
-        !------------------------------------------------
-        fldname = 'inst_runoff_rate_lnd'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            call copy2block(GFS_Coupling%runoff_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get surface runoff from land'
-          endif
+      endif
+      ! get surface runoff in soil
+      !------------------------------------------------
+      fldname = 'inst_runoff_rate_lnd'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          call copy2block(GFS_Coupling%runoff_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get surface runoff from land'
         endif
-        ! get subsurface runoff in soil
-        !------------------------------------------------
-        fldname = 'inst_subsurface_runoff_rate_lnd'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            call copy2block(GFS_Coupling%drain_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get subsurface runoff from land'
-          endif
+      endif
+      ! get subsurface runoff in soil
+      !------------------------------------------------
+      fldname = 'inst_subsurface_runoff_rate_lnd'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          call copy2block(GFS_Coupling%drain_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get subsurface runoff from land'
         endif
-        ! get momentum exchange coefficient
-        !------------------------------------------------
-        fldname = 'inst_drag_wind_speed_for_momentum'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            call copy2block(GFS_Coupling%cmm_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get drag wind speed for momentum from land'
-          endif
+      endif
+      ! get momentum exchange coefficient
+      !------------------------------------------------
+      fldname = 'inst_drag_wind_speed_for_momentum'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          call copy2block(GFS_Coupling%cmm_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get drag wind speed for momentum from land'
         endif
-        ! get thermal exchange coefficient
-        !------------------------------------------------
-        fldname = 'inst_drag_mass_flux_for_heat_and_moisture'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            call copy2block(GFS_Coupling%chh_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get thermal exchange coefficient form land'
-          endif
+      endif
+      ! get thermal exchange coefficient
+      !------------------------------------------------
+      fldname = 'inst_drag_mass_flux_for_heat_and_moisture'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          call copy2block(GFS_Coupling%chh_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get thermal exchange coefficient form land'
         endif
-        ! get function of surface roughness length and green vegetation fraction
-        !------------------------------------------------
-        fldname = 'inst_func_of_roughness_length_and_vfrac'
-        if (trim(impfield_name) == trim(fldname)) then
-          if (importFieldsValid(queryImportFields(fldname))) then
-            call copy2block(GFS_Coupling%zvfun_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
-            if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get func. of roughness length and vfrac form land'
-          endif
+      endif
+      ! get function of surface roughness length and green vegetation fraction
+      !------------------------------------------------
+      fldname = 'inst_func_of_roughness_length_and_vfrac'
+      if (trim(impfield_name) == trim(fldname)) then
+        if (importFieldsValid(queryImportFields(fldname))) then
+          call copy2block(GFS_Coupling%zvfun_lnd, dataptr, mask=GFS_Sfcprop%landfrac)
+          if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'fv3 assign_import: get func. of roughness length and vfrac form land'
         endif
-      endif ! GFS_control%cpllnd .and. GFS_control%cpllnd2atm
-
-    endif ! if (dataptr(isc,jsc) > -99999.0) then
+      endif
+    endif ! GFS_control%cpllnd .and. GFS_control%cpllnd2atm
 
     if (GFS_control%cpl_fire) then
       ! get kinematic surface upward sensible heat flux of fire from Fire Behaviour model
@@ -2379,7 +2374,7 @@ subroutine assign_importdata(atmtime,atmtimestep,isregional,ngrids,rc)
         endif
       endif
 
-      if (lcpl_fice) then
+      if (GFS_control%cplflx .and. GFS_control%cplice) then
         GFS_Coupling%slimskin_cpl(im) = GFS_Sfcprop%slmsk(im)
         ofrac = GFS_Sfcprop%oceanfrac(im)
 
@@ -2408,20 +2403,13 @@ subroutine assign_importdata(atmtime,atmtimestep,isregional,ngrids,rc)
             GFS_Sfcprop%fice(im)        = zero
             GFS_Sfcprop%hice(im)        = zero
             GFS_Coupling%hsnoin_cpl(im) = zero
-            !
-            GFS_Coupling%dtsfcin_cpl(im)  = -99999.0 ! over open water - should not be used in ATM
-            GFS_Coupling%dqsfcin_cpl(im)  = -99999.0 !                 ,,
-            GFS_Coupling%dusfcin_cpl(im)  = -99999.0 !                 ,,
-            GFS_Coupling%dvsfcin_cpl(im)  = -99999.0 !                 ,,
-            GFS_Coupling%dtsfcin_cpl(im)  = -99999.0 !                 ,,
-            GFS_Coupling%ulwsfcin_cpl(im) = -99999.0 !                 ,,
             if (abs(one-GFS_Sfcprop%oceanfrac(im)) < epsln) then !  100% open water
               GFS_Coupling%slimskin_cpl(im) = zero
               GFS_Sfcprop%slmsk(im)         = zero
             endif
           endif ! GFS_Sfcprop%fice(im) >= GFS_control%min_seaice
         endif ! GFS_Sfcprop%oceanfrac(im) > zero
-      endif ! lcpl_fice
+      endif ! GFS_control%cplflx .and. GFS_control%cplice
     enddo
   enddo
 
