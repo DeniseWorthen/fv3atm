@@ -796,8 +796,6 @@ module GFS_typedefs
     logical              :: rrfs_sd         !< default no rrfs_sd collection
     logical              :: cpl_fire        !< default no fire_behavior collection
     logical              :: use_cice_alb    !< default .false. - i.e. don't use albedo imported from the ice model
-    logical              :: cpl_imp_mrg     !< default no merge import with internal forcings
-    logical              :: cpl_imp_dbg     !< default no write import data to file post merge
     logical              :: use_med_flux    !< default .false. - i.e. don't use atmosphere-ocean fluxes imported from mediator
 
 !--- cdeps inline parameters
@@ -3518,8 +3516,6 @@ module GFS_typedefs
     logical              :: rrfs_sd        = .false.         !< default no rrfs_sd collection
     logical              :: cpl_fire       = .false.         !< default no fire behavior colleciton
     logical              :: use_cice_alb   = .false.         !< default no cice albedo
-    logical              :: cpl_imp_mrg    = .false.         !< default no merge import with internal forcings
-    logical              :: cpl_imp_dbg    = .false.         !< default no write import data to file post merge
     logical              :: use_med_flux   = .false.         !< default no atmosphere-ocean fluxes from mediator
 
     !--- cdeps inline parameters
@@ -4209,7 +4205,7 @@ module GFS_typedefs
                                tend_opt_mp, tend_opt_stoch,                                 &
                           !--- coupling parameters
                                cplflx, cplice, cplocn2atm, cplwav, cplwav2atm, cplaqm,      &
-                               cplchm, cpllnd, cpllnd2atm, cpl_imp_mrg, cpl_imp_dbg,        &
+                               cplchm, cpllnd, cpllnd2atm,                                  &
                                cpl_fire, rrfs_sd, use_cice_alb,                             &
 #ifdef IDEA_PHYS
                                lsidea, weimer_model, f107_kp_size, f107_kp_interval,        &
@@ -4664,8 +4660,6 @@ module GFS_typedefs
     Model%cpllnd           = cpllnd
     Model%cpllnd2atm       = cpllnd2atm
     Model%use_cice_alb     = use_cice_alb
-    Model%cpl_imp_mrg      = cpl_imp_mrg
-    Model%cpl_imp_dbg      = cpl_imp_dbg
     Model%use_med_flux     = use_med_flux
 
 !--- cdeps inline parameters
@@ -6909,8 +6903,6 @@ module GFS_typedefs
       print *, ' rrfs_sd           : ', Model%rrfs_sd
       print *, ' cpl_fire          : ', Model%cpl_fire
       print *, ' use_cice_alb      : ', Model%use_cice_alb
-      print *, ' cpl_imp_mrg       : ', Model%cpl_imp_mrg
-      print *, ' cpl_imp_dbg       : ', Model%cpl_imp_dbg
       print *, ' use_med_flux      : ', Model%use_med_flux
       print *, ' use_cdeps_inline  : ', Model%use_cdeps_inline
       if(Model%imfdeepcnv == Model%imfdeepcnv_gf .or.Model%imfdeepcnv == Model%imfdeepcnv_c3) then

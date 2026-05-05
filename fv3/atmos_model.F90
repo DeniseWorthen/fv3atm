@@ -199,8 +199,10 @@ logical :: debug        = .false. !< Logical for running debug mode
 logical :: sync         = .false. !< Logical to enable sync for timing
 real    :: avg_max_length=3600.   !< Maximum length for time averaging
 logical :: ignore_rst_cksum = .false. !< Logical to ignore restart file checksum
+logical :: cpl_imp_mrg = .false. !< Logical to merge imported data
+logical :: cpl_imp_dbg = .false. !< Logical to debug imported data
 namelist /atmos_model_nml/ blocksize, chksum_debug, dycore_only, debug, sync, ccpp_suite, avg_max_length, &
-                           ignore_rst_cksum
+                           ignore_rst_cksum, cpl_imp_mrg, cpl_imp_dbg
 
 type (time_type) :: diag_time, diag_time_fhzero !< Time diagnostic and forecast hour zero time diagnostic
 
@@ -1891,7 +1893,7 @@ subroutine assign_importdata(atmtime,atmtimestep,isregional,ngrids,rc)
 
   rc  = -999
   ! configurations with nests cannot create debug FBs in this routine
-  if (ngrids > 1 .and. GFS_control%cpl_imp_dbg) then
+  if (ngrids > 1 .and. cpl_imp_dbg) then
     print '(A)','cpl_imp_dbg=.T. is incompatible with ngrids>1'
     return
   endif
@@ -1906,7 +1908,7 @@ subroutine assign_importdata(atmtime,atmtimestep,isregional,ngrids,rc)
   allocate(dataptr(isc:iec,jsc:jec))
   allocate(mergeflg(isc:iec,jsc:jec))
 
-  if (GFS_control%cpl_imp_dbg) then
+  if (cpl_imp_dbg) then
     FBcpl2phys = ESMF_FieldBundleCreate(rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
     do n = 1,nImportFields
@@ -1939,7 +1941,7 @@ subroutine assign_importdata(atmtime,atmtimestep,isregional,ngrids,rc)
         call ESMF_FieldGet(importFields(n),farrayPtr=datar82d,localDE=0, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
         dataptr = datar82d
-        if (GFS_control%cpl_imp_mrg) then
+        if (cpl_imp_mrg) then
           mergeflg(:,:) = datar82d(:,:).eq.missing_value
         endif
         if (mpp_pe() == mpp_root_pe() .and. debug) print '(A,3g16.7)','in cplIMP,atmos gets '//trim(impfield_name) &
@@ -1973,7 +1975,7 @@ subroutine assign_importdata(atmtime,atmtimestep,isregional,ngrids,rc)
         if (importFieldsValid(queryImportFields(fldname))) then
           add2FB = .true.
           call copy2block(GFS_Sfcprop%tsfco, dataptr, mask=GFS_Sfcprop%oceanfrac, validmin=150.0_GFS_kind_phys)
-          if (GFS_control%cpl_imp_mrg) then
+          if (cpl_imp_mrg) then
             call merge_importfield(GFS_Sfcprop%tsfco, GFS_Sfcprop%tsfc, mergeflg, mask=GFS_Sfcprop%oceanfrac)
           end if
           if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'get sst from mediator'
@@ -1986,7 +1988,7 @@ subroutine assign_importdata(atmtime,atmtimestep,isregional,ngrids,rc)
         if (importFieldsValid(queryImportFields(fldname))) then
           add2FB = .true.
           call copy2block(GFS_Sfcprop%usfco, dataptr, mask=GFS_Sfcprop%oceanfrac)
-          if (GFS_control%cpl_imp_mrg) then
+          if (cpl_imp_mrg) then
             call merge_importfield(GFS_Sfcprop%usfco, zero, mergeflg, mask=GFS_Sfcprop%oceanfrac)
           end if
           if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'get usfco from mediator'
@@ -1999,7 +2001,7 @@ subroutine assign_importdata(atmtime,atmtimestep,isregional,ngrids,rc)
         if (importFieldsValid(queryImportFields(fldname))) then
           add2FB = .true.
           call copy2block(GFS_Sfcprop%vsfco, dataptr, mask=GFS_Sfcprop%oceanfrac)
-          if (GFS_control%cpl_imp_mrg) then
+          if (cpl_imp_mrg) then
             call merge_importfield(GFS_Sfcprop%vsfco, zero, mergeflg, mask=GFS_Sfcprop%oceanfrac)
           end if
           if (mpp_pe() == mpp_root_pe() .and. debug)  print *,'get vsfco from mediator'
@@ -2333,7 +2335,7 @@ subroutine assign_importdata(atmtime,atmtimestep,isregional,ngrids,rc)
       endif
     endif ! (GFS_control%cpl_fire)
 
-    if (GFS_control%cpl_imp_dbg .and. add2FB) then
+    if (cpl_imp_dbg .and. add2FB) then
       dbgField = ESMF_FieldCreate(grid=grid, typekind=ESMF_TYPEKIND_R8, name=trim(impfield_name), rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) return
       call ESMF_FieldBundleAdd(FBcpl2phys, (/dbgField/), rc=rc)
@@ -2345,7 +2347,7 @@ subroutine assign_importdata(atmtime,atmtimestep,isregional,ngrids,rc)
   deallocate(dataptr)
 
   !add fields not present in importstate to debug FB
-  if (GFS_control%cpl_imp_dbg) then
+  if (cpl_imp_dbg) then
     allocate(fieldlist(4), source=[character(len=14) :: 'ocean_fraction', 'slimskin_cpl', 'slmsk', 'zorlw'])
     do n = 1,4
       dbgField = ESMF_FieldCreate(grid=grid, typekind=ESMF_TYPEKIND_R8, name=trim(fieldlist(n)), rc=rc)
@@ -2413,7 +2415,7 @@ subroutine assign_importdata(atmtime,atmtimestep,isregional,ngrids,rc)
     enddo
   enddo
 
-  if (GFS_control%cpl_imp_dbg) then
+  if (cpl_imp_dbg) then
     call get_date(atmtime+atmtimestep,iyear,imonth,iday,ihour,iminute,isecond)
     write(timestring, "(I4.4,I2.2,I2.2,'.',I2.2,I2.2,I2.2)") iyear,imonth,iday,ihour,iminute,isecond
     if (isregional) then
