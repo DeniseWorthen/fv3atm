@@ -13,7 +13,7 @@
   #url = https://github.com/ufs-community/ccpp-physics
   #branch = ufs/dev
   url = https://github.com/DeniseWorthen/ccpp-physics.git
-  branch = feature/GFSdebug_cleanup
+  branch = feature/cleanup
 [submodule "upp"]
   path = upp
   url = https://github.com/NOAA-EMC/UPP
